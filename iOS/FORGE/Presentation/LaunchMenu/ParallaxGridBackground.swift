@@ -82,8 +82,8 @@ struct ParallaxGridBackground: View {
         guard motionManager.isDeviceMotionAvailable else { return }
 
         motionManager.deviceMotionUpdateInterval = 1.0 / 60.0
-        motionManager.startDeviceMotionUpdates(to: .main) { [weak self] motionData, error in
-            guard let self = self, let data = motionData, error == nil else { return }
+        motionManager.startDeviceMotionUpdates(to: .main) { motionData, error in
+            guard let data = motionData, error == nil else { return }
 
             let gravity = data.gravity
 

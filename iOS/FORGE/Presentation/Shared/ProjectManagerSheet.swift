@@ -140,7 +140,6 @@ struct ProjectManagerSheet: View {
                 .buttonStyle(PlainButtonStyle())
                 .listRowBackground(SwiftUI.Color.forgeSurface)
                 .listRowSeparatorTint(SwiftUI.Color.forgeBorder)
-                .listRowCornerRadius(10)
                 .padding(.vertical, 2)
             }
             .onDelete { indexSet in
