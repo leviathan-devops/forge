@@ -35,7 +35,6 @@ docker-osx-storage/
 .DS_Store
 
 # Forge build artifacts
-forge-bundle.js
 forge-metafile.json
 *.wasm
 !tree-sitter.wasm
