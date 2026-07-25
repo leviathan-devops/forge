@@ -12,11 +12,13 @@ const kMaxListeners = 10;
 const kCaptureRejectionSymbol = Symbol('kCapture');
 
 export class EventEmitter {
-  private _events: Map<string | symbol, Listener[] | OnceWrapper[]> = new Map();
+  private _events: Map<string | symbol, any[]> = new Map();
   private _maxListeners: number = kMaxListeners;
   [kCaptureRejectionSymbol]: boolean = false;
 
   static defaultMaxListeners: number = kMaxListeners;
+  static captureRejectionSymbol: symbol = Symbol.for('nodejs.rejection');
+  static errorMonitor: symbol = Symbol('events.errorMonitor');
 
   static once(emitter: EventEmitter, name: string | symbol, options?: any): Promise<any[]> {
     return new Promise((resolve, reject) => {
@@ -266,9 +268,5 @@ export class EventEmitter {
     }
   }
 }
-
-// Capture rejections helper (no-op stub for API compat)
-EventEmitter.captureRejectionSymbol = Symbol.for('nodejs.rejection');
-EventEmitter.errorMonitor = Symbol('events.errorMonitor');
 
 export default EventEmitter;

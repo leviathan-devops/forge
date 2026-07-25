@@ -16,6 +16,7 @@ for (let i = 0; i < BASE64_CHARS.length; i++) BASE64_LOOKUP[BASE64_CHARS.charCod
 
 const HEX_CHARS = '0123456789abcdef';
 
+// @ts-ignore - Uint8Array static 'from()' signature is incompatible with Buffer.from(); runtime is correct
 export class Buffer extends Uint8Array {
   static readonly poolSize: number = 8192;
 

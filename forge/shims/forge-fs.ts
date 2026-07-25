@@ -366,5 +366,5 @@ export default {
   readFile, writeFile, appendFile, readdir, stat, lstat, fstat, unlink, rm, rmdir, mkdir,
   rename, copyFile, chmod, chown, realpath, access, exists, createReadStream, createWriteStream,
   watch, readFileSync, writeFileSync, existsSync, mkdirSync, statSync, readdirSync, unlinkSync, rmSync,
-  promises, constants, Stats, Dirent, FSWatcher,
+  promises, constants, FSWatcher,
 };

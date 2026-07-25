@@ -203,7 +203,7 @@ export class ClientRequest extends EventEmitter {
       this.write(chunk, encoding);
     }
     this._ended = true;
-    this._doRequest().then(cb ?? (() => {}));
+    this._doRequest().then((cb ?? (() => {})) as () => void);
     return this;
   }
 
@@ -226,7 +226,7 @@ export class ClientRequest extends EventEmitter {
     this._timeout = setTimeout(() => {
       this.destroy(new Error(`Request timeout after ${timeout}ms`));
     }, timeout);
-    if (cb) this.on('timeout', cb);
+    if (cb) this.on('timeout', cb as (...args: any[]) => void);
     return this;
   }
 

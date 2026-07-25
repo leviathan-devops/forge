@@ -435,7 +435,9 @@ export function isDeepStrictEqual(val1: any, val2: any): boolean {
 
 // --- TextDecoder/TextEncoder passthrough ---
 
-export { TextDecoder, TextEncoder } from 'globalThis';
+// TextDecoder/TextEncoder are provided as globals by the ES2022/DOM libs
+const { TextDecoder, TextEncoder } = globalThis;
+export { TextDecoder, TextEncoder };
 
 // --- debuglog ---
 

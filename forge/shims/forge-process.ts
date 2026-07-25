@@ -178,9 +178,9 @@ export function spawn(
 
   const native = (globalThis as any).window?.__forgeNative;
   if (!native?.call) {
-    setImmediate(() => {
+    setTimeout(() => {
       emitter.emit('error', new Error('[FORGE] Native bridge not available for spawn()'));
-    });
+    }, 0);
     return childProc;
   }
 

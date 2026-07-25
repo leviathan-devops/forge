@@ -242,7 +242,7 @@ function syncSubtleDigest(algorithm: string, data: Uint8Array): Uint8Array {
 
   const webAlg = algMap[algorithm] || algMap[algorithm.replace('-', '')] || `SHA-256`;
 
-  const promise = subtle.digest(webAlg, data);
+  const promise = subtle.digest(webAlg, data as BufferSource);
   // Synchronous wait via Atomics.wait (works in Web Workers, fallback for main thread)
   // In practice, on iOS Safari, we may need to handle this differently.
   // For now, we use a synchronous XMLHttpRequest-based trick or accept async.

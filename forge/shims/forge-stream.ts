@@ -383,7 +383,7 @@ export class Writable extends Stream {
     }
 
     doWrite();
-    return state.length < state.highWaterMark;
+    return state.buffer.length < state.highWaterMark;
   }
 
   end(chunk?: any, encoding?: string | Function, cb?: Function): this {
@@ -444,7 +444,7 @@ export class Duplex extends Readable {
     write?: (chunk: any, encoding: string, cb: Function) => void;
   }) {
     super(options);
-    this._writableState = new Writable(options)._writableState;
+    this._writableState = (new Writable(options) as any)._writableState as Writable['_writableState'];
     if (options?.write) (this as any)._write = options.write;
   }
 
