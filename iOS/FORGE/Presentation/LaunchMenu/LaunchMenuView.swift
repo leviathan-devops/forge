@@ -14,6 +14,11 @@ struct LaunchMenuView: View {
 
     @State private var selectedCardMode: ForgeMode?
 
+    // Launch animation state (§Task 2)
+    @State private var titleOpacity: Double = 0
+    @State private var cardsOffset: CGFloat = 20
+    @State private var cardsOpacity: Double = 0
+
     var body: some View {
         ZStack {
             // Parallax background
@@ -24,13 +29,14 @@ struct LaunchMenuView: View {
             VStack(spacing: 0) {
                 Spacer()
 
-                // FORGE Title
+                // FORGE Title — fade-in on appear
                 forgeTitle
+                    .opacity(titleOpacity)
 
                 Spacer()
                     .frame(height: 48)
 
-                // Mode Cards
+                // Mode Cards — slide-up on appear
                 VStack(spacing: 16) {
                     ForEach(ForgeMode.allCases, id: \.self) { mode in
                         ModeCard(
@@ -48,6 +54,8 @@ struct LaunchMenuView: View {
                     }
                 }
                 .padding(.horizontal, 24)
+                .opacity(cardsOpacity)
+                .offset(y: cardsOffset)
 
                 Spacer()
                     .frame(height: 24)
@@ -65,6 +73,16 @@ struct LaunchMenuView: View {
                     .padding(.bottom, 32)
             }
             .padding(.horizontal)
+            // Staggered launch animation: title fades in, then cards slide up.
+            .onAppear {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    titleOpacity = 1
+                }
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.15)) {
+                    cardsOffset = 0
+                    cardsOpacity = 1
+                }
+            }
         }
         .fullScreenCover(
             isPresented: Binding(

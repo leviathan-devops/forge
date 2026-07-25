@@ -167,6 +167,80 @@
         inputBuffer = '';
     }
 
+    // -------------------------------------------------------------------------
+    // Command History (up/down arrow navigation)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Stores previously executed commands. Most recent is at the end.
+     * Capped at 50 entries (FIFO — oldest is removed when full).
+     * @type {string[]}
+     */
+    var commandHistory = [];
+
+    /** Maximum number of commands to retain. */
+    var MAX_HISTORY = 50;
+
+    /**
+     * Current navigation index into commandHistory.
+     * -1 means the user is editing a fresh line (not browsing history).
+     * Any other value means the user pressed Up and is viewing that entry.
+     */
+    var historyIndex = -1;
+
+    /**
+     * Replaces the current input line on screen with `newText`.
+     * Erases the existing buffer visually, then echoes the new text and
+     * sets the buffer. Used by arrow-key history navigation.
+     * @param {string} newText The replacement text.
+     */
+    function replaceInput(newText) {
+        // Erase the current input line using \b \b for each character.
+        var len = inputBuffer.length;
+        var eraseSeq = '';
+        for (var i = 0; i < len; i++) {
+            eraseSeq += '\b \b';
+        }
+        write(eraseSeq);
+        // Set buffer and echo the new text.
+        inputBuffer = newText;
+        write(newText);
+    }
+
+    /**
+     * Handles the Up arrow key. Navigates backward through command history.
+     * If the user is on a fresh line, jumps to the most recent command.
+     * If already browsing, moves one step further back.
+     */
+    function handleHistoryUp() {
+        if (commandHistory.length === 0) return;
+        if (historyIndex === -1) {
+            // Start browsing from the most recent command.
+            historyIndex = commandHistory.length - 1;
+            replaceInput(commandHistory[historyIndex]);
+        } else if (historyIndex > 0) {
+            historyIndex--;
+            replaceInput(commandHistory[historyIndex]);
+        }
+        // If historyIndex === 0, we're at the oldest — stay there.
+    }
+
+    /**
+     * Handles the Down arrow key. Navigates forward through command history.
+     * If at the end, restores an empty input line (exits history mode).
+     */
+    function handleHistoryDown() {
+        if (historyIndex === -1) return; // Not browsing history.
+        if (historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            replaceInput(commandHistory[historyIndex]);
+        } else {
+            // Reached the end — clear to empty input (fresh line).
+            historyIndex = -1;
+            replaceInput('');
+        }
+    }
+
     /**
      * Processes a completed input line when the user presses Enter.
      * Dispatches to the command processor, then shows a fresh prompt.
@@ -178,8 +252,20 @@
 
         var trimmed = line.trim();
         if (trimmed.length > 0) {
+            // Store in command history. Skip if identical to the most recent
+            // entry to avoid consecutive duplicates.
+            if (commandHistory.length === 0 ||
+                commandHistory[commandHistory.length - 1] !== trimmed) {
+                commandHistory.push(trimmed);
+                // Cap history at MAX_HISTORY entries (FIFO).
+                if (commandHistory.length > MAX_HISTORY) {
+                    commandHistory.shift();
+                }
+            }
             executeCommand(trimmed);
         }
+        // Reset history navigation index for the next line.
+        historyIndex = -1;
         // Show a new prompt for the next command
         showPrompt();
     }
@@ -245,6 +331,9 @@
         }
 
         writeln('');
+        writeln(color('  Tip: ', ANSI.YELLOW) +
+                color('↑/↓', ANSI.CYAN) +
+                color(' arrows cycle through command history', ANSI.DIM));
         writeln(color('  More commands will be available when the', ANSI.DIM));
         writeln(color('  full Trident T3 engine bundle is loaded.', ANSI.DIM));
         writeln('');
@@ -395,8 +484,10 @@
      *   - '\b' (0x08)        → Backspace (alternate)
      *   - '\x03' (3)         → Ctrl+C (cancel current line)
      *   - '\x15' (21)        → Ctrl+U (clear line)
+     *   - '\u001b[A'         → Up arrow (previous command in history)
+     *   - '\u001b[B'         → Down arrow (next command in history)
      *   - printable chars    → regular characters (echo and buffer)
-     *   - escape sequences   → arrow keys, function keys (ignored in Phase 1)
+     *   - escape sequences   → arrow keys handled; others ignored
      *
      * @param {string} data The raw keystroke data from SwiftTerm.
      */
@@ -409,7 +500,28 @@
             var ch = data[i];
             var code = data.charCodeAt(i);
 
-            if (code === 0x0D || code === 0x0A) {
+            if (code === 0x1B) {
+                // Escape sequence — check for arrow keys: ESC [ A/B/C/D.
+                // Arrow keys arrive as 3-byte sequences: \u001b[A (up),
+                // \u001b[B (down), \u001b[C (right), \u001b[D (left).
+                if (i + 2 < data.length && data.charCodeAt(i + 1) === 0x5B) {
+                    var arrowCode = data.charCodeAt(i + 2);
+                    if (arrowCode === 0x41) {
+                        // Up arrow → navigate backward through command history
+                        handleHistoryUp();
+                    } else if (arrowCode === 0x42) {
+                        // Down arrow → navigate forward through command history
+                        handleHistoryDown();
+                    }
+                    // C (right) and D (left) not handled in Phase 1.
+                    // Skip the rest of the escape sequence (3 chars total).
+                    i += 2;
+                    continue;
+                }
+                // Lone ESC or unrecognized escape sequence — skip silently.
+                continue;
+
+            } else if (code === 0x0D || code === 0x0A) {
                 // Enter / Return / Line feed → process the command line
                 processLine();
 
@@ -433,9 +545,7 @@
                 echoChar(ch);
 
             }
-            // else: other control characters (0x00–0x1F, 0x7F handled above)
-            // are silently ignored in Phase 1. The full bundle will handle
-            // escape sequences (arrows, Home/End, etc.).
+            // else: other control characters (0x00–0x1F) are silently ignored.
         }
     };
 

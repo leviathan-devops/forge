@@ -60,6 +60,26 @@ struct ForgeTerminalView: UIViewRepresentable {
         view.alwaysBounceHorizontal = false
         view.showsVerticalScrollIndicator = true
 
+        // Keyboard accessory view with a Done button to dismiss the keyboard (§Task 3).
+        let toolbar = UIToolbar(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 44))
+        toolbar.barStyle = .black
+        toolbar.isTranslucent = true
+        toolbar.items = [
+            UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
+            UIBarButtonItem(
+                title: "Done",
+                style: .done,
+                target: context.coordinator,
+                action: #selector(Coordinator.dismissKeyboard)
+            )
+        ]
+        toolbar.sizeToFit()
+        view.inputAccessoryView = toolbar
+
+        // Store a weak reference in the coordinator so the Done button can
+        // resign first responder (§Task 3).
+        context.coordinator.terminalView = view
+
         // Publish the created view to the binding on the next run loop so
         // SwiftUI's update cycle is not interrupted.
         DispatchQueue.main.async {
@@ -88,10 +108,22 @@ struct ForgeTerminalView: UIViewRepresentable {
         let onSend: ((Data) -> Void)?
         let onResize: ((Int, Int) -> Void)?
 
+        /// Weak reference to the TerminalView so the keyboard Done button
+        /// action can dismiss the keyboard (§Task 3).
+        weak var terminalView: TerminalView?
+
         init(onSend: ((Data) -> Void)?, onResize: ((Int, Int) -> Void)?) {
             self.onSend = onSend
             self.onResize = onResize
             super.init()
+        }
+
+        // MARK: Keyboard Dismissal
+
+        /// Called when the user taps "Done" in the keyboard accessory bar.
+        /// Resigns first responder to hide the keyboard (§Task 3).
+        @objc func dismissKeyboard() {
+            terminalView?.resignFirstResponder()
         }
 
         // MARK: Input
