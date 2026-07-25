@@ -53,9 +53,6 @@ struct TopBar: View {
                     .buttonStyle(PlainButtonStyle())
                     .accessibilityIdentifier("backButton")
                 }
-                    .buttonStyle(PlainButtonStyle())
-                    .accessibilityIdentifier("backButton")
-                }
 
                 Spacer()
             }
