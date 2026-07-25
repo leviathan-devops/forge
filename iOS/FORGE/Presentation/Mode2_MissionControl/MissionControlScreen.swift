@@ -74,11 +74,12 @@ struct MissionControlScreen: View {
                     .font(.forgeHeadline)
                     .foregroundColor(.forgePrimaryText)
                 if !connectionManager.sessions.isEmpty {
-                    let session = currentSession
-                    Text("\(session.server.name) — \(session.displayName)")
-                        .font(.forgeCaption)
-                        .foregroundColor(.forgeSecondaryText)
-                        .lineLimit(1)
+                    if let session = currentSession {
+                        Text("\(session.server.name) — \(session.displayName)")
+                            .font(.forgeCaption)
+                            .foregroundColor(.forgeSecondaryText)
+                            .lineLimit(1)
+                    }
                 }
             }
 
@@ -182,8 +183,9 @@ struct MissionControlScreen: View {
 
     // MARK: - Derived
 
-    private var currentSession: RemoteSession {
-        let safeIndex = min(currentIndex, connectionManager.sessions.count - 1)
+    private var currentSession: RemoteSession? {
+        guard !connectionManager.sessions.isEmpty else { return nil }
+        let safeIndex = min(max(0, currentIndex), connectionManager.sessions.count - 1)
         return connectionManager.sessions[safeIndex]
     }
 }

@@ -137,17 +137,8 @@ struct BuildOnDeviceScreen: View {
     // MARK: - Engine lifecycle
 
     private func startEngine() {
-        // If a project is already selected, apply it; otherwise prompt.
-        if let project = appState.currentProject {
-            applyProject(project)
-        } else if appState.projects.isEmpty {
-            // No projects exist yet — prompt the user to create one.
-            showingProjectManager = true
-        } else if let last = appState.projects.first {
-            // Reopen the most recently accessed project.
-            appState.openProject(last)
-            applyProject(last)
-        }
+        // Tear down any previous engine before creating a new one.
+        if engine != nil { stopEngine() }
 
         let newBridge = ForgeBridge()
         let newEngine = ForgeEngine(bridge: newBridge)
@@ -170,8 +161,22 @@ struct BuildOnDeviceScreen: View {
             errorMessage = message
         }
 
+        // Store bridge/engine BEFORE applying the project so applyProject
+        // can call bridge?.setProjectRoot on the NEW bridge.
         bridge = newBridge
         engine = newEngine
+
+        // If a project is already selected, apply it; otherwise prompt.
+        if let project = appState.currentProject {
+            applyProject(project)
+        } else if appState.projects.isEmpty {
+            // No projects exist yet — prompt the user to create one.
+            showingProjectManager = true
+        } else if let last = appState.projects.first {
+            // Reopen the most recently accessed project.
+            appState.openProject(last)
+            applyProject(last)
+        }
 
         // Load the bundle — the bootstrap will fire __ready when done.
         newEngine.loadBundle()
@@ -192,11 +197,13 @@ struct BuildOnDeviceScreen: View {
     private func applyProject(_ project: ForgeProject) {
         bridge?.setProjectRoot(project.path)
 
-        // Initialize Git if credentials are configured.
+        // Initialize Git if credentials are configured. A callbackId is
+        // required by ForgeBridge — nil causes the operation to be silently
+        // skipped. Use a throwaway UUID since we don't need the result.
         if KeychainHelper.exists(for: ForgeSettingsKeys.apiKey) {
             bridge?.gitOperation(
                 ["operation": "init"],
-                callbackId: nil
+                callbackId: UUID().uuidString
             )
         }
     }

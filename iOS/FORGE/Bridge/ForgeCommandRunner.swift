@@ -376,6 +376,9 @@ final class ForgeCommandRunner {
             }
             fileArg = tokens.dropFirst().joined(separator: " ")
         }
+        // Guard against negative n (Swift's prefix handles it by returning
+        // empty, but clamp for clarity and consistency with tail).
+        n = max(0, n)
         let cleaned = stripFlags(fileArg)
         let path = resolvePath(cleaned, cwd: cwd)
         guard let content = try? String(contentsOfFile: path, encoding: .utf8) else {
@@ -400,6 +403,9 @@ final class ForgeCommandRunner {
             }
             fileArg = tokens.dropFirst().joined(separator: " ")
         }
+        // Guard against negative n which would produce an offset > lines.count
+        // and crash on Array(lines[offset...]).
+        n = max(0, n)
         let cleaned = stripFlags(fileArg)
         let path = resolvePath(cleaned, cwd: cwd)
         guard let content = try? String(contentsOfFile: path, encoding: .utf8) else {
@@ -407,7 +413,9 @@ final class ForgeCommandRunner {
         }
         let lines = content.components(separatedBy: "\n")
         let offset = max(0, lines.count - n)
-        let tail = Array(lines[offset...])
+        // Clamp offset to valid range to prevent index-out-of-bounds crash.
+        let safeOffset = min(offset, lines.count)
+        let tail = Array(lines[safeOffset...])
         return CommandResult(stdout: tail.joined(separator: "\n") + "\n", stderr: "", exitCode: 0)
     }
 

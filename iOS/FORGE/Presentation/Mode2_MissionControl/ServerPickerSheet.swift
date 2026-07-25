@@ -21,25 +21,25 @@ struct ServerPickerSheet: View {
     @State private var useTLS: Bool = false
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 // MARK: - Add server form
                 Section("Add Server") {
                     TextField("Name", text: $name)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
 
                     TextField("Hostname / IP", text: $hostname)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
                         .keyboardType(.URL)
 
                     TextField("Port", text: $port)
                         .keyboardType(.numberPad)
 
                     SecureField("Bearer Token (optional)", text: $bearerToken)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
 
                     Toggle("Use TLS (wss/https)", isOn: $useTLS)
 

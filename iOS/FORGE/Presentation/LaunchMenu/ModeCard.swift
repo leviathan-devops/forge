@@ -22,6 +22,7 @@ struct ModeCard: View {
                 .opacity(isPressed ? 0.9 : 1.0)
         }
         .buttonStyle(PlainButtonStyle())
+        .accessibilityIdentifier(mode.rawValue)
         .disabled(isSelected)
     }
 

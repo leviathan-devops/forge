@@ -245,6 +245,7 @@ final class AppState: ObservableObject {
         loadSettings()
         loadProjects()
         loadSessions()
+        loadServers()
     }
 
     // MARK: - Navigation Actions
@@ -324,10 +325,11 @@ final class AppState: ObservableObject {
 
     /// The filesystem directory where projects are stored.
     var projectsDirectory: URL {
-        FileManager.default
+        let docs = FileManager.default
             .urls(for: .documentDirectory, in: .userDomainMask)
-            .first!
-            .appendingPathComponent("projects")
+            .first
+            ?? FileManager.default.temporaryDirectory
+        return docs.appendingPathComponent("projects")
     }
 
     /// Load project metadata from UserDefaults.

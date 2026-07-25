@@ -75,6 +75,9 @@ final class RemoteSessionViewModel: ObservableObject {
             self.connectionLost = false
             self.statusText = "Connected to \(session.server.name)"
         }
+        // Reset the backoff counter on sessionQueue so all accesses are
+        // serialized on the same queue as the increment in handleDisconnect.
+        sessionQueue.async { self.reconnectAttempts = 0 }
 
         receiveLoop()
     }
@@ -150,18 +153,20 @@ final class RemoteSessionViewModel: ObservableObject {
             "\r\n\u{001b}[31mConnection lost — reconnecting…\u{001b}[0m\r\n"
         )
 
-        guard !isManualDisconnect else { return }
+        // Serialize reconnection state on sessionQueue to avoid data races
+        // with disconnect() which sets isManualDisconnect on the main thread.
+        sessionQueue.async { [weak self] in
+            guard let self = self else { return }
+            guard !self.isManualDisconnect else { return }
 
-        reconnectAttempts += 1
-        let delay = min(2.0 * pow(2.0, Double(reconnectAttempts - 1)), 60.0)
+            self.reconnectAttempts += 1
+            let delay = min(2.0 * pow(2.0, Double(self.reconnectAttempts - 1)), 60.0)
 
-        sessionQueue.asyncAfter(deadline: .now() + delay) { [weak self] in
-            guard let self = self, !self.isManualDisconnect else { return }
-            self.webSocket?.cancel()
-            self.webSocket = nil
-            self.openConnection()
-            if self.isConnected {
-                self.reconnectAttempts = 0
+            self.sessionQueue.asyncAfter(deadline: .now() + delay) { [weak self] in
+                guard let self = self, !self.isManualDisconnect else { return }
+                self.webSocket?.cancel()
+                self.webSocket = nil
+                self.openConnection()
             }
         }
     }

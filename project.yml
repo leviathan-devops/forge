@@ -68,3 +68,15 @@ targets:
     settings:
       base:
         PRODUCT_NAME: FORGE
+
+  FORGEUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: iOS/FORGE/UITests
+    dependencies:
+      - target: FORGE
+    settings:
+      base:
+        PRODUCT_NAME: FORGEUITests
+        PRODUCT_BUNDLE_IDENTIFIER: com.forge.uitests

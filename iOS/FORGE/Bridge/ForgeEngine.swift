@@ -25,7 +25,15 @@ final class ForgeEngine: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
     // MARK: - Properties
 
     /// The hidden web view used purely as a JS sandbox.
-    private(set) var webView: WKWebView!
+    private(set) var webView: WKWebView?
+
+    /// Weak proxy that breaks the retain cycle between ForgeEngine and
+    /// WKUserContentController. The controller retains its message handlers,
+    /// so passing `self` directly would create a cycle:
+    ///   engine → webView → configuration → userContentController → engine
+    /// The proxy is retained by the controller but weakly references the
+    /// engine, breaking the cycle.
+    private weak var messageProxy: WeakScriptMessageHandler?
 
     /// The bridge that handles every native method call.
     private let bridge: ForgeBridge
@@ -75,26 +83,32 @@ final class ForgeEngine: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
 
         // Register the message handler that JS calls via
         // `window.webkit.messageHandlers.native.postMessage(...)`.
-        config.userContentController.add(self, name: "native")
+        // Use a weak proxy to avoid the retain cycle:
+        //   engine → webView → config → userContentController → engine
+        let proxy = WeakScriptMessageHandler(proxyTarget: self)
+        messageProxy = proxy
+        config.userContentController.add(proxy, name: "native")
 
         // Inject the native API script at document start, before any bundle
         // code runs.
         injectNativeAPI(config.userContentController)
 
         // Create the WebView with a zero frame — it is never visible.
-        webView = WKWebView(frame: .zero, configuration: config)
-        webView.navigationDelegate = self
+        let wv = WKWebView(frame: .zero, configuration: config)
+        wv.navigationDelegate = self
 
         // Disable all user interaction; this view is invisible.
-        webView.isUserInteractionEnabled = false
-        webView.scrollView.isScrollEnabled = false
-        webView.allowsBackForwardNavigationGestures = false
+        wv.isUserInteractionEnabled = false
+        wv.scrollView.isScrollEnabled = false
+        wv.allowsBackForwardNavigationGestures = false
+
+        webView = wv
 
         // Wire the bridge back to this engine so it can resolve/reject.
         bridge.engine = self
 
         // Suppress any rendered web content — we only want JS execution.
-        webView.evaluateJavaScript(
+        wv.evaluateJavaScript(
             "document.documentElement.style.display = 'none'",
             completionHandler: nil
         )
@@ -196,7 +210,7 @@ final class ForgeEngine: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
         </html>
         """
 
-        webView.loadHTMLString(html, baseURL: Bundle.main.bundleURL)
+        webView?.loadHTMLString(html, baseURL: Bundle.main.bundleURL)
     }
 
     // MARK: - API credentials (§12.1)
@@ -232,7 +246,7 @@ final class ForgeEngine: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
     /// engine via the `window.__forgeInput` callback.
     func sendInput(_ escapedInput: String) {
         let js = "window.__forgeInput('\(escapedInput)');"
-        webView?.evaluateJavaScript(js, completionHandler: nil)
+        evalJS(js)
     }
 
     /// Sends a resize event to the JS engine so OpenTUI can re-layout.
@@ -241,7 +255,7 @@ final class ForgeEngine: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
         window.__forgeCols=\(cols);window.__forgeRows=\(rows);
         if(window.__forgeResizeCallback){window.__forgeResizeCallback(\(cols),\(rows));}
         """
-        webView?.evaluateJavaScript(js, completionHandler: nil)
+        evalJS(js)
     }
 
     // MARK: - Lifecycle (§25)
@@ -281,6 +295,7 @@ final class ForgeEngine: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
             forName: "native"
         )
         webView?.stopLoading()
+        webView = nil
         outputTimer?.cancel()
         outputTimer = nil
         outputBuffer = ""
@@ -424,6 +439,21 @@ final class ForgeEngine: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
 
     // MARK: - Callback resolution (§3.4)
 
+    /// Evaluates JavaScript on the main thread, logging any error in DEBUG
+    /// builds instead of silently dropping it. All fire-and-forget JS calls
+    /// should route through this to ensure errors are visible during
+    /// development.
+    private func evalJS(_ js: String) {
+        webView?.evaluateJavaScript(js) { _, error in
+            #if DEBUG
+            if let error = error {
+                print("[ForgeEngine] JS eval error: \(error.localizedDescription)")
+                print("[ForgeEngine] JS was: \(js.prefix(200))")
+            }
+            #endif
+        }
+    }
+
     /// Resolves a pending JavaScript callback with `result`.
     ///
     /// The result is JSON-serialized when it is a JSON-compatible object,
@@ -432,7 +462,7 @@ final class ForgeEngine: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
         let json = serializeForJS(result)
         let js = "window.__forgeNative.resolve('\(callbackId)', \(json));"
         DispatchQueue.main.async { [weak self] in
-            self?.webView?.evaluateJavaScript(js, completionHandler: nil)
+            self?.evalJS(js)
         }
     }
 
@@ -443,7 +473,7 @@ final class ForgeEngine: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
             .replacingOccurrences(of: "\n", with: "\\n")
         let js = "window.__forgeNative.reject('\(callbackId)', '\(escaped)');"
         DispatchQueue.main.async { [weak self] in
-            self?.webView?.evaluateJavaScript(js, completionHandler: nil)
+            self?.evalJS(js)
         }
     }
 
@@ -511,5 +541,34 @@ final class ForgeEngine: NSObject, WKScriptMessageHandler, WKNavigationDelegate 
     /// Rejects a callback on the given engine.
     static func reject(_ engine: ForgeEngine?, _ callbackId: String, _ error: String) {
         engine?.rejectCallback(callbackId, error: error)
+    }
+}
+
+// MARK: - WeakScriptMessageHandler
+
+/// A weak proxy that breaks the retain cycle between ForgeEngine and
+/// WKUserContentController.
+///
+/// `WKUserContentController.add(_:name:)` retains its message handler. If we
+/// pass the ForgeEngine directly, the controller retains it:
+///   engine → webView → configuration → userContentController → engine
+///
+/// This cycle prevents the engine from ever being deallocated. The proxy is
+/// retained by the controller but holds only a weak reference to the engine,
+/// so the cycle is broken. When the engine is deallocated, the proxy's target
+/// becomes nil and message forwarding silently no-ops.
+private final class WeakScriptMessageHandler: NSObject, WKScriptMessageHandler {
+    weak var target: WKScriptMessageHandler?
+
+    init(proxyTarget: WKScriptMessageHandler) {
+        self.target = proxyTarget
+        super.init()
+    }
+
+    func userContentController(
+        _ userContentController: WKUserContentController,
+        didReceive message: WKScriptMessage
+    ) {
+        target?.userContentController(userContentController, didReceive: message)
     }
 }

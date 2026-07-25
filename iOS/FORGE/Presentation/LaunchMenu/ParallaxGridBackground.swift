@@ -11,7 +11,13 @@ struct ParallaxGridBackground: View {
     @State private var xOffset: CGFloat = 0
     @State private var yOffset: CGFloat = 0
 
-    private let motionManager = CMMotionManager()
+    /// Must be @State so SwiftUI persists the same CMMotionManager across
+    /// body recomputations. Without @State, SwiftUI recreates the struct on
+    /// every parent body evaluation, allocating a new CMMotionManager each
+    /// time. The onDisappear closure would then call stopDeviceMotionUpdates
+    /// on a DIFFERENT instance than the one that started updates — leaving
+    /// the original manager running forever (battery drain).
+    @State private var motionManager = CMMotionManager()
     private let gridSize: CGFloat = ForgeMetrics.gridSize           // 40pt
     private let maxOffset: CGFloat = ForgeMetrics.maxParallaxOffset // 10pt
     private let gridOpacity: Double = ForgeMetrics.gridOpacity      // 0.03

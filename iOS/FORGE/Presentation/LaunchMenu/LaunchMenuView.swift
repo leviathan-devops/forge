@@ -78,8 +78,13 @@ struct LaunchMenuView: View {
             )
         ) {
             if let mode = appState.selectedMode {
-                ModePlaceholderView(mode: mode)
-                    .environmentObject(appState)
+                switch mode {
+                case .onDevice:
+                    BuildOnDeviceScreen()
+                        .environmentObject(appState)
+                case .missionControl:
+                    MissionControlScreen()
+                }
             }
         }
     }
@@ -177,6 +182,7 @@ struct LaunchMenuView: View {
             .frame(width: 64, height: 48)
         }
         .buttonStyle(PlainButtonStyle())
+        .accessibilityIdentifier(label)
     }
 }
 

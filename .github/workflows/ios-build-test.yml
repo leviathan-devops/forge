@@ -76,6 +76,22 @@ jobs:
           xcrun simctl io booted screenshot "$GITHUB_WORKSPACE/forge-launch-screenshot.png"
           echo "SCREENSHOT TAKEN"
 
+      - name: Run UI Tests
+        run: |
+          xcodebuild test \
+            -project FORGE.xcodeproj \
+            -scheme FORGE \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -only-testing:FORGEUITests \
+            -derivedDataPath ./build \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee ui-test.log || true
+          
+          # Collect screenshots from the simulator
+          mkdir -p ui-screenshots
+          find ~/Library/Developer/CoreSimulator/Devices -name "*.png" -newer build.log -exec cp {} ui-screenshots/ \; 2>/dev/null || true
+          echo "Collected $(ls ui-screenshots/ 2>/dev/null | wc -l) screenshots"
+
       - name: Upload Build Log
         if: always()
         uses: actions/upload-artifact@v4
@@ -90,6 +106,22 @@ jobs:
         with:
           name: screenshots
           path: "*.png"
+          if-no-files-found: ignore
+
+      - name: Upload UI Test Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-screenshots
+          path: ui-screenshots/
+          if-no-files-found: ignore
+
+      - name: Upload UI Test Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-log
+          path: ui-test.log
           if-no-files-found: ignore
 
       - name: Upload App Bundle
