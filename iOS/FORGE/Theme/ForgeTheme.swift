@@ -152,26 +152,26 @@ struct ForgeTheme {
     /// The complete 16-entry ANSI color array. Index 0–7 are normal colors,
     /// 8–15 are bright variants. SwiftTerm consumes these directly.
     static let ansiColors: [SwiftTerm.Color] = [
-        SwiftTerm.Color(red: Double(0x1A)/255.0, green: Double(0x1A)/255.0, blue: Double(0x24)/255.0), // 0  Black
-        SwiftTerm.Color(red: Double(0xFF)/255.0, green: Double(0x55)/255.0, blue: Double(0x55)/255.0), // 1  Red
-        SwiftTerm.Color(red: Double(0x50)/255.0, green: Double(0xFA)/255.0, blue: Double(0x7B)/255.0), // 2  Green
-        SwiftTerm.Color(red: Double(0xF1)/255.0, green: Double(0xFA)/255.0, blue: Double(0x8C)/255.0), // 3  Yellow
-        SwiftTerm.Color(red: Double(0x00)/255.0, green: Double(0xF0)/255.0, blue: Double(0xFF)/255.0), // 4  Blue / Cyan accent
-        SwiftTerm.Color(red: Double(0xFF)/255.0, green: Double(0x79)/255.0, blue: Double(0xC6)/255.0), // 5  Magenta
-        SwiftTerm.Color(red: Double(0x8B)/255.0, green: Double(0xE9)/255.0, blue: Double(0xFD)/255.0), // 6  Cyan light
-        SwiftTerm.Color(red: Double(0xE0)/255.0, green: Double(0xE0)/255.0, blue: Double(0xE0)/255.0), // 7  White
-        SwiftTerm.Color(red: Double(0x28)/255.0, green: Double(0x28)/255.0, blue: Double(0x32)/255.0), // 8  Bright black
-        SwiftTerm.Color(red: Double(0xFF)/255.0, green: Double(0x6E)/255.0, blue: Double(0x6E)/255.0), // 9  Bright red
-        SwiftTerm.Color(red: Double(0x69)/255.0, green: Double(0xFF)/255.0, blue: Double(0x94)/255.0), // 10 Bright green
-        SwiftTerm.Color(red: Double(0xFF)/255.0, green: Double(0xFA)/255.0, blue: Double(0x6C)/255.0), // 11 Bright yellow
-        SwiftTerm.Color(red: Double(0x00)/255.0, green: Double(0xFF)/255.0, blue: Double(0xFF)/255.0), // 12 Bright blue
-        SwiftTerm.Color(red: Double(0xFF)/255.0, green: Double(0x92)/255.0, blue: Double(0xD0)/255.0), // 13 Bright magenta
-        SwiftTerm.Color(red: Double(0xA4)/255.0, green: Double(0xFF)/255.0, blue: Double(0xFF)/255.0), // 14 Bright cyan
-        SwiftTerm.Color(red: Double(0xFF)/255.0, green: Double(0xFF)/255.0, blue: Double(0xFF)/255.0), // 15 Bright white
+        SwiftTerm.Color(red: 0x1A, green: 0x1A, blue: 0x24), // 0  Black
+        SwiftTerm.Color(red: 0xFF, green: 0x55, blue: 0x55), // 1  Red
+        SwiftTerm.Color(red: 0x50, green: 0xFA, blue: 0x7B), // 2  Green
+        SwiftTerm.Color(red: 0xF1, green: 0xFA, blue: 0x8C), // 3  Yellow
+        SwiftTerm.Color(red: 0x00, green: 0xF0, blue: 0xFF), // 4  Blue / Cyan accent
+        SwiftTerm.Color(red: 0xFF, green: 0x79, blue: 0xC6), // 5  Magenta
+        SwiftTerm.Color(red: 0x8B, green: 0xE9, blue: 0xFD), // 6  Cyan light
+        SwiftTerm.Color(red: 0xE0, green: 0xE0, blue: 0xE0), // 7  White
+        SwiftTerm.Color(red: 0x28, green: 0x28, blue: 0x32), // 8  Bright black
+        SwiftTerm.Color(red: 0xFF, green: 0x6E, blue: 0x6E), // 9  Bright red
+        SwiftTerm.Color(red: 0x69, green: 0xFF, blue: 0x94), // 10 Bright green
+        SwiftTerm.Color(red: 0xFF, green: 0xFA, blue: 0x6C), // 11 Bright yellow
+        SwiftTerm.Color(red: 0x00, green: 0xFF, blue: 0xFF), // 12 Bright blue
+        SwiftTerm.Color(red: 0xFF, green: 0x92, blue: 0xD0), // 13 Bright magenta
+        SwiftTerm.Color(red: 0xA4, green: 0xFF, blue: 0xFF), // 14 Bright cyan
+        SwiftTerm.Color(red: 0xFF, green: 0xFF, blue: 0xFF), // 15 Bright white
     ]
 
     /// The default cursor color (electric cyan).
-    static let cursorColor = SwiftTerm.Color(red: Double(0x00)/255.0, green: Double(0xF0)/255.0, blue: Double(0xFF)/255.0)
+    static let cursorColor = SwiftTerm.Color(red: 0x00, green: 0xF0, blue: 0xFF)
 
     /// The default selection background (cyan at low alpha).
     static let selectionColor = UIColor(red: 0x00/255, green: 0xF0/255, blue: 0xFF/255, alpha: 0.2)
