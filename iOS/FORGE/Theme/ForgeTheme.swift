@@ -14,7 +14,7 @@ import SwiftTerm
 
 // MARK: - SwiftUI Color Palette
 
-extension Color {
+extension SwiftUI.Color {
     /// Near-black app background. Hex 0A0A0F.
     static let forgeBackground = Color(red: 0x0A/255, green: 0x0A/255, blue: 0x0F/255)
 
@@ -152,26 +152,26 @@ struct ForgeTheme {
     /// The complete 16-entry ANSI color array. Index 0–7 are normal colors,
     /// 8–15 are bright variants. SwiftTerm consumes these directly.
     static let ansiColors: [SwiftTerm.Color] = [
-        SwiftTerm.Color(red8: 0x1A, green8: 0x1A, blue8: 0x24), // 0  Black
-        SwiftTerm.Color(red8: 0xFF, green8: 0x55, blue8: 0x55), // 1  Red
-        SwiftTerm.Color(red8: 0x50, green8: 0xFA, blue8: 0x7B), // 2  Green
-        SwiftTerm.Color(red8: 0xF1, green8: 0xFA, blue8: 0x8C), // 3  Yellow
-        SwiftTerm.Color(red8: 0x00, green8: 0xF0, blue8: 0xFF), // 4  Blue / Cyan accent
-        SwiftTerm.Color(red8: 0xFF, green8: 0x79, blue8: 0xC6), // 5  Magenta
-        SwiftTerm.Color(red8: 0x8B, green8: 0xE9, blue8: 0xFD), // 6  Cyan light
-        SwiftTerm.Color(red8: 0xE0, green8: 0xE0, blue8: 0xE0), // 7  White
-        SwiftTerm.Color(red8: 0x28, green8: 0x28, blue8: 0x32), // 8  Bright black
-        SwiftTerm.Color(red8: 0xFF, green8: 0x6E, blue8: 0x6E), // 9  Bright red
-        SwiftTerm.Color(red8: 0x69, green8: 0xFF, blue8: 0x94), // 10 Bright green
-        SwiftTerm.Color(red8: 0xFF, green8: 0xFA, blue8: 0x6C), // 11 Bright yellow
-        SwiftTerm.Color(red8: 0x00, green8: 0xFF, blue8: 0xFF), // 12 Bright blue
-        SwiftTerm.Color(red8: 0xFF, green8: 0x92, blue8: 0xD0), // 13 Bright magenta
-        SwiftTerm.Color(red8: 0xA4, green8: 0xFF, blue8: 0xFF), // 14 Bright cyan
-        SwiftTerm.Color(red8: 0xFF, green8: 0xFF, blue8: 0xFF), // 15 Bright white
+        SwiftTerm.Color(red: Double(0x1A)/255.0, green: Double(0x1A)/255.0, blue: Double(0x24)/255.0), // 0  Black
+        SwiftTerm.Color(red: Double(0xFF)/255.0, green: Double(0x55)/255.0, blue: Double(0x55)/255.0), // 1  Red
+        SwiftTerm.Color(red: Double(0x50)/255.0, green: Double(0xFA)/255.0, blue: Double(0x7B)/255.0), // 2  Green
+        SwiftTerm.Color(red: Double(0xF1)/255.0, green: Double(0xFA)/255.0, blue: Double(0x8C)/255.0), // 3  Yellow
+        SwiftTerm.Color(red: Double(0x00)/255.0, green: Double(0xF0)/255.0, blue: Double(0xFF)/255.0), // 4  Blue / Cyan accent
+        SwiftTerm.Color(red: Double(0xFF)/255.0, green: Double(0x79)/255.0, blue: Double(0xC6)/255.0), // 5  Magenta
+        SwiftTerm.Color(red: Double(0x8B)/255.0, green: Double(0xE9)/255.0, blue: Double(0xFD)/255.0), // 6  Cyan light
+        SwiftTerm.Color(red: Double(0xE0)/255.0, green: Double(0xE0)/255.0, blue: Double(0xE0)/255.0), // 7  White
+        SwiftTerm.Color(red: Double(0x28)/255.0, green: Double(0x28)/255.0, blue: Double(0x32)/255.0), // 8  Bright black
+        SwiftTerm.Color(red: Double(0xFF)/255.0, green: Double(0x6E)/255.0, blue: Double(0x6E)/255.0), // 9  Bright red
+        SwiftTerm.Color(red: Double(0x69)/255.0, green: Double(0xFF)/255.0, blue: Double(0x94)/255.0), // 10 Bright green
+        SwiftTerm.Color(red: Double(0xFF)/255.0, green: Double(0xFA)/255.0, blue: Double(0x6C)/255.0), // 11 Bright yellow
+        SwiftTerm.Color(red: Double(0x00)/255.0, green: Double(0xFF)/255.0, blue: Double(0xFF)/255.0), // 12 Bright blue
+        SwiftTerm.Color(red: Double(0xFF)/255.0, green: Double(0x92)/255.0, blue: Double(0xD0)/255.0), // 13 Bright magenta
+        SwiftTerm.Color(red: Double(0xA4)/255.0, green: Double(0xFF)/255.0, blue: Double(0xFF)/255.0), // 14 Bright cyan
+        SwiftTerm.Color(red: Double(0xFF)/255.0, green: Double(0xFF)/255.0, blue: Double(0xFF)/255.0), // 15 Bright white
     ]
 
     /// The default cursor color (electric cyan).
-    static let cursorColor = SwiftTerm.Color(red8: 0x00, green8: 0xF0, blue8: 0xFF)
+    static let cursorColor = SwiftTerm.Color(red: Double(0x00)/255.0, green: Double(0xF0)/255.0, blue: Double(0xFF)/255.0)
 
     /// The default selection background (cyan at low alpha).
     static let selectionColor = UIColor(red: 0x00/255, green: 0xF0/255, blue: 0xFF/255, alpha: 0.2)
@@ -191,7 +191,7 @@ struct ForgeTheme {
 
 // MARK: - Extended Color Palette
 
-extension Color {
+extension SwiftUI.Color {
     /// Purple accent. Hex BD93F9.
     static let forgePurple = Color(red: 0xBD/255, green: 0x93/255, blue: 0xF9/255)
 

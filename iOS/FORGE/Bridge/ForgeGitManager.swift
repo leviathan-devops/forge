@@ -1,4 +1,5 @@
 import Foundation
+import WebKit
 
 /// ForgeGitManager (Stub — Phase 2 will add libgit2 via direct C bindings)
 ///
