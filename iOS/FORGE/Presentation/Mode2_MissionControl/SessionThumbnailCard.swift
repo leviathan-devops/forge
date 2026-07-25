@@ -18,7 +18,7 @@ struct SessionThumbnailCard: View {
         VStack(alignment: .leading, spacing: 8) {
             // Miniature terminal preview.
             ZStack(alignment: .topLeading) {
-                Color.forgeBackground
+                SwiftUI.Color.forgeBackground
                 VStack(alignment: .leading, spacing: 2) {
                     ForEach(previewLines.indices, id: \.self) { i in
                         Text(previewLines[i])
@@ -61,11 +61,11 @@ struct SessionThumbnailCard: View {
             )
         }
         .padding(8)
-        .background(Color.forgeSurface)
+        .background(SwiftUI.Color.forgeSurface)
         .overlay(
             RoundedRectangle(cornerRadius: 10)
                 .stroke(
-                    isActive ? Color.forgeAccent.opacity(0.6) : Color.forgeBorder,
+                    isActive ? SwiftUI.Color.forgeAccent.opacity(0.6) : SwiftUI.Color.forgeBorder,
                     lineWidth: isActive ? 1.5 : 1
                 )
         )
@@ -81,7 +81,7 @@ struct SessionThumbnailCard: View {
     }
 
     /// Connection dot color: green when active, gray otherwise.
-    private var statusColor: Color {
+    private var statusColor: SwiftUI.Color {
         session.info.active ? .forgeSuccess : .forgeSecondaryText
     }
 }
@@ -106,9 +106,9 @@ private struct PhaseProgressView: View {
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 2)
-                        .fill(Color.forgeSecondaryText.opacity(0.3))
+                        .fill(SwiftUI.Color.forgeSecondaryText.opacity(0.3))
                     RoundedRectangle(cornerRadius: 2)
-                        .fill(isActive ? Color.forgeAccent : Color.forgeSecondaryText)
+                        .fill(isActive ? SwiftUI.Color.forgeAccent : SwiftUI.Color.forgeSecondaryText)
                         .frame(width: isActive ? geo.size.width * 0.6 : geo.size.width * 0.15)
                 }
             }

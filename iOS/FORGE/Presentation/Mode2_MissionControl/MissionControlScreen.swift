@@ -27,7 +27,7 @@ struct MissionControlScreen: View {
 
     var body: some View {
         ZStack {
-            Color.forgeBackground.ignoresSafeArea()
+            SwiftUI.Color.forgeBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 topBar
@@ -106,7 +106,7 @@ struct MissionControlScreen: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .background(Color.forgeSurface)
+        .background(SwiftUI.Color.forgeSurface)
     }
 
     // MARK: - Session pager
@@ -172,7 +172,7 @@ struct MissionControlScreen: View {
                 .foregroundColor(.forgeBackground)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)
-                .background(Color.forgeAccent)
+                .background(SwiftUI.Color.forgeAccent)
                 .clipShape(Capsule())
             }
         }
@@ -199,7 +199,7 @@ struct EagleVisionPinchOverlay: View {
     let sessionCount: Int
 
     var body: some View {
-        Color.clear
+        SwiftUI.Color.clear
             .contentShape(Rectangle())
             .gesture(
                 MagnificationGesture()

@@ -45,7 +45,7 @@ struct ProjectManagerSheet: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .background(Color.forgeBackground)
+            .background(SwiftUI.Color.forgeBackground)
             .tint(.forgeAccent)
         }
         .preferredColorScheme(.dark)
@@ -72,16 +72,16 @@ struct ProjectManagerSheet: View {
         VStack(spacing: 24) {
             Image(systemName: "folder.badge.plus")
                 .font(.system(size: 56, weight: .light))
-                .foregroundStyle(Color.forgeSecondaryText)
+                .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
 
             VStack(spacing: 8) {
                 Text("No Projects Yet")
                     .font(.forgeHeadline)
-                    .foregroundStyle(Color.forgePrimaryText)
+                    .foregroundStyle(SwiftUI.Color.forgePrimaryText)
 
                 Text("Create your first project to get started")
                     .font(.forgeBody)
-                    .foregroundStyle(Color.forgeSecondaryText)
+                    .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
                     .multilineTextAlignment(.center)
             }
 
@@ -94,10 +94,10 @@ struct ProjectManagerSheet: View {
                     Text("New Project")
                 }
                 .font(.forgeBodyMono)
-                .foregroundStyle(Color.forgeBackground)
+                .foregroundStyle(SwiftUI.Color.forgeBackground)
                 .padding(.horizontal, 28)
                 .padding(.vertical, 14)
-                .background(Color.forgeAccent)
+                .background(SwiftUI.Color.forgeAccent)
                 .clipShape(Capsule())
             }
             .buttonStyle(PlainButtonStyle())
@@ -112,15 +112,15 @@ struct ProjectManagerSheet: View {
         VStack(spacing: 12) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 36))
-                .foregroundStyle(Color.forgeSecondaryText)
+                .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
 
             Text("No projects found")
                 .font(.forgeBody)
-                .foregroundStyle(Color.forgeSecondaryText)
+                .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
 
             Text("Try a different search term")
                 .font(.forgeCaption)
-                .foregroundStyle(Color.forgeSecondaryText)
+                .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -138,8 +138,8 @@ struct ProjectManagerSheet: View {
                     ProjectRow(project: project)
                 }
                 .buttonStyle(PlainButtonStyle())
-                .listRowBackground(Color.forgeSurface)
-                .listRowSeparatorTint(Color.forgeBorder)
+                .listRowBackground(SwiftUI.Color.forgeSurface)
+                .listRowSeparatorTint(SwiftUI.Color.forgeBorder)
                 .listRowCornerRadius(10)
                 .padding(.vertical, 2)
             }
@@ -191,7 +191,7 @@ struct ProjectManagerSheet: View {
                             Image(systemName: "folder.fill.badge.plus")
                             Text("Create Project")
                         }
-                        .foregroundStyle(Color.forgeSuccess)
+                        .foregroundStyle(SwiftUI.Color.forgeSuccess)
                         .fontWeight(.medium)
                     }
                     .disabled(newProjectName.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -208,7 +208,7 @@ struct ProjectManagerSheet: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .background(Color.forgeBackground)
+            .background(SwiftUI.Color.forgeBackground)
             .tint(.forgeAccent)
         }
         .preferredColorScheme(.dark)
@@ -292,27 +292,27 @@ struct ProjectRow: View {
             // Language icon
             Image(systemName: languageIcon)
                 .font(.system(size: 24))
-                .foregroundStyle(Color.forgeAccent)
+                .foregroundStyle(SwiftUI.Color.forgeAccent)
                 .frame(width: 36, height: 36)
 
             // Project info
             VStack(alignment: .leading, spacing: 4) {
                 Text(project.name)
                     .font(.forgeBodyMono)
-                    .foregroundStyle(Color.forgePrimaryText)
+                    .foregroundStyle(SwiftUI.Color.forgePrimaryText)
 
                 HStack(spacing: 6) {
                     Text(project.language)
                         .font(.forgeMicro)
-                        .foregroundStyle(Color.forgeSecondaryText)
+                        .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
 
                     Text("•")
                         .font(.forgeMicro)
-                        .foregroundStyle(Color.forgeSecondaryText)
+                        .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
 
                     Text(project.framework)
                         .font(.forgeMicro)
-                        .foregroundStyle(Color.forgeSecondaryText)
+                        .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
                 }
             }
 
@@ -322,11 +322,11 @@ struct ProjectRow: View {
             VStack(alignment: .trailing, spacing: 2) {
                 Text(project.lastAccessed, style: .relative)
                     .font(.forgeMicro)
-                    .foregroundStyle(Color.forgeSecondaryText)
+                    .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
 
                 Text("ago")
                     .font(.forgeMicro)
-                    .foregroundStyle(Color.forgeSecondaryText)
+                    .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
             }
         }
         .padding(.vertical, 6)

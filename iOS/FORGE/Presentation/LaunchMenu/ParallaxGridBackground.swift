@@ -20,13 +20,13 @@ struct ParallaxGridBackground: View {
         GeometryReader { geometry in
             ZStack {
                 // Solid background
-                Color.forgeBackground
+                SwiftUI.Color.forgeBackground
 
                 // Subtle radial glow at center-top
                 RadialGradient(
                     colors: [
-                        Color.forgeAccent.opacity(0.04),
-                        Color.clear
+                        SwiftUI.Color.forgeAccent.opacity(0.04),
+                        SwiftUI.Color.clear
                     ],
                     center: .top,
                     startRadius: 0,

@@ -33,7 +33,7 @@ struct TopBar: View {
             // Centered title
             Text(title)
                 .font(.forgeBodyMono)
-                .foregroundStyle(Color.forgePrimaryText)
+                .foregroundStyle(SwiftUI.Color.forgePrimaryText)
                 .tracking(1)
                 .lineLimit(1)
 
@@ -46,7 +46,7 @@ struct TopBar: View {
                     }) {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(Color.forgeAccent)
+                            .foregroundStyle(SwiftUI.Color.forgeAccent)
                             .frame(width: 36, height: 36)
                             .contentShape(Rectangle())
                     }
@@ -67,7 +67,7 @@ struct TopBar: View {
                     }) {
                         Image(systemName: rightIcon)
                             .font(.system(size: 17))
-                            .foregroundStyle(Color.forgeSecondaryText)
+                            .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
                             .frame(width: 36, height: 36)
                             .contentShape(Rectangle())
                     }
@@ -78,10 +78,10 @@ struct TopBar: View {
         .frame(height: ForgeMetrics.topBarHeight)
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 8)
-        .background(Color.forgeSurface.opacity(0.95))
+        .background(SwiftUI.Color.forgeSurface.opacity(0.95))
         .overlay(
             Rectangle()
-                .fill(Color.forgeBorder)
+                .fill(SwiftUI.Color.forgeBorder)
                 .frame(height: 0.5),
             alignment: .bottom
         )
@@ -101,7 +101,7 @@ struct TopBar: View {
         )
         Spacer()
     }
-    .background(Color.forgeBackground)
+    .background(SwiftUI.Color.forgeBackground)
     .preferredColorScheme(.dark)
 }
 
@@ -110,6 +110,6 @@ struct TopBar: View {
         TopBar(title: "PROJECTS")
         Spacer()
     }
-    .background(Color.forgeBackground)
+    .background(SwiftUI.Color.forgeBackground)
     .preferredColorScheme(.dark)
 }

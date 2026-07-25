@@ -32,7 +32,7 @@ struct ModeCard: View {
             // Icon
             Image(systemName: mode.icon)
                 .font(.system(size: 40, weight: .light))
-                .foregroundStyle(Color.forgeAccent)
+                .foregroundStyle(SwiftUI.Color.forgeAccent)
                 .frame(width: 56, height: 56)
                 .forgeGlow()
 
@@ -40,12 +40,12 @@ struct ModeCard: View {
             VStack(spacing: 6) {
                 Text(mode.rawValue)
                     .font(.forgeHeadline)
-                    .foregroundStyle(Color.forgePrimaryText)
+                    .foregroundStyle(SwiftUI.Color.forgePrimaryText)
                     .tracking(1)
 
                 Text(mode.subtitle)
                     .font(.forgeBody)
-                    .foregroundStyle(Color.forgeSecondaryText)
+                    .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -91,5 +91,5 @@ struct ModeCard: View {
         )
     }
     .padding()
-    .background(Color.forgeBackground)
+    .background(SwiftUI.Color.forgeBackground)
 }

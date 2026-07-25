@@ -49,7 +49,7 @@ struct EagleVisionGridView: View {
                 .padding(.bottom, 32)
             }
         }
-        .background(Color.forgeBackground)
+        .background(SwiftUI.Color.forgeBackground)
     }
 
     private var emptyState: some View {

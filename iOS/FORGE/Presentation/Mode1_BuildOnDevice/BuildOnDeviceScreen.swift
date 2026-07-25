@@ -48,7 +48,7 @@ struct BuildOnDeviceScreen: View {
 
     var body: some View {
         ZStack {
-            Color.forgeBackground.ignoresSafeArea()
+            SwiftUI.Color.forgeBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 TopBar(
@@ -115,13 +115,13 @@ struct BuildOnDeviceScreen: View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 48))
-                .foregroundStyle(Color.forgeError)
+                .foregroundStyle(SwiftUI.Color.forgeError)
             Text("Engine Error")
                 .font(.forgeHeadline)
-                .foregroundStyle(Color.forgePrimaryText)
+                .foregroundStyle(SwiftUI.Color.forgePrimaryText)
             Text(message)
                 .font(.forgeBody)
-                .foregroundStyle(Color.forgeSecondaryText)
+                .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
             Button("Retry") {
@@ -129,7 +129,7 @@ struct BuildOnDeviceScreen: View {
                 errorMessage = nil
                 startEngine()
             }
-            .foregroundStyle(Color.forgeAccent)
+            .foregroundStyle(SwiftUI.Color.forgeAccent)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

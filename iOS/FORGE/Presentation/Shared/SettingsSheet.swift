@@ -42,7 +42,7 @@ struct SettingsSheet: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .background(Color.forgeBackground)
+            .background(SwiftUI.Color.forgeBackground)
             .tint(.forgeAccent)
         }
         .preferredColorScheme(.dark)
@@ -85,13 +85,13 @@ struct SettingsSheet: View {
             // Model name
             HStack {
                 Text("Model")
-                    .foregroundStyle(Color.forgePrimaryText)
+                    .foregroundStyle(SwiftUI.Color.forgePrimaryText)
                 Spacer()
                 TextField("model-name", text: $modelName)
                     .multilineTextAlignment(.trailing)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
-                    .foregroundStyle(Color.forgeSecondaryText)
+                    .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
                     .font(.forgeBodyMono)
                     .onChange(of: modelName) { _, _ in hasUnsavedChanges = true }
             }
@@ -107,7 +107,7 @@ struct SettingsSheet: View {
                     Text("Reset to Default Model")
                 }
                 .font(.forgeCaption)
-                .foregroundStyle(Color.forgeAccent)
+                .foregroundStyle(SwiftUI.Color.forgeAccent)
             }
         } header: {
             sectionHeader("API CONFIGURATION", icon: "brain.head.profile")
@@ -132,7 +132,7 @@ struct SettingsSheet: View {
         } footer: {
             Text("Used for commit authorship in Git operations.")
                 .font(.forgeMicro)
-                .foregroundStyle(Color.forgeSecondaryText)
+                .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
         }
     }
 
@@ -145,7 +145,7 @@ struct SettingsSheet: View {
                     Image(systemName: "checkmark.circle.fill")
                     Text("Save Settings")
                 }
-                .foregroundStyle(Color.forgeSuccess)
+                .foregroundStyle(SwiftUI.Color.forgeSuccess)
                 .fontWeight(.medium)
             }
 
@@ -179,7 +179,7 @@ struct SettingsSheet: View {
                     Image(systemName: "arrow.up.right")
                         .font(.system(size: 12))
                 }
-                .foregroundStyle(Color.forgeAccent)
+                .foregroundStyle(SwiftUI.Color.forgeAccent)
             }
 
             Link(destination: URL(string: "https://github.com")!) {
@@ -190,7 +190,7 @@ struct SettingsSheet: View {
                     Image(systemName: "arrow.up.right")
                         .font(.system(size: 12))
                 }
-                .foregroundStyle(Color.forgeAccent)
+                .foregroundStyle(SwiftUI.Color.forgeAccent)
             }
         } header: {
             sectionHeader("ABOUT", icon: "info.circle")
@@ -214,17 +214,17 @@ struct SettingsSheet: View {
             Text(title)
         }
         .font(.forgeMicro)
-        .foregroundStyle(Color.forgeSecondaryText)
+        .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
         .tracking(0.5)
     }
 
     private func aboutRow(label: String, value: String) -> some View {
         HStack {
             Text(label)
-                .foregroundStyle(Color.forgePrimaryText)
+                .foregroundStyle(SwiftUI.Color.forgePrimaryText)
             Spacer()
             Text(value)
-                .foregroundStyle(Color.forgeSecondaryText)
+                .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
                 .font(.forgeBodyMono)
         }
     }

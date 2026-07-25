@@ -124,7 +124,7 @@ struct ForgeSession: Identifiable, Codable, Equatable {
             rawValue.capitalized
         }
 
-        var color: Color {
+        var color: SwiftUI.Color {
             switch self {
             case .active:    return .forgeSuccess
             case .idle:      return .forgeSecondaryText

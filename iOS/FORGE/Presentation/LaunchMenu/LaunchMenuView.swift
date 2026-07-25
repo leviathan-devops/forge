@@ -90,7 +90,7 @@ struct LaunchMenuView: View {
         VStack(spacing: 0) {
             Text("FORGE")
                 .font(.forgeTitle)
-                .foregroundStyle(Color.forgePrimaryText)
+                .foregroundStyle(SwiftUI.Color.forgePrimaryText)
                 .tracking(4)
 
             // Cyan underline
@@ -98,9 +98,9 @@ struct LaunchMenuView: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color.forgeAccent.opacity(0),
-                            Color.forgeAccent,
-                            Color.forgeAccent.opacity(0)
+                            SwiftUI.Color.forgeAccent.opacity(0),
+                            SwiftUI.Color.forgeAccent,
+                            SwiftUI.Color.forgeAccent.opacity(0)
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
@@ -131,12 +131,12 @@ struct LaunchMenuView: View {
                         .font(.forgeBodyMono)
                 }
             }
-            .foregroundStyle(Color.forgeAccent)
+            .foregroundStyle(SwiftUI.Color.forgeAccent)
             .padding(.vertical, 12)
             .padding(.horizontal, 20)
             .background(
                 RoundedRectangle(cornerRadius: ForgeMetrics.smallCornerRadius, style: .continuous)
-                    .stroke(Color.forgeBorder, lineWidth: 1)
+                    .stroke(SwiftUI.Color.forgeBorder, lineWidth: 1)
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -168,11 +168,11 @@ struct LaunchMenuView: View {
             VStack(spacing: 4) {
                 Image(systemName: icon)
                     .font(.system(size: 18))
-                    .foregroundStyle(Color.forgeSecondaryText)
+                    .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
 
                 Text(label)
                     .font(.forgeMicro)
-                    .foregroundStyle(Color.forgeSecondaryText)
+                    .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
             }
             .frame(width: 64, height: 48)
         }
@@ -190,7 +190,7 @@ struct ModePlaceholderView: View {
 
     var body: some View {
         ZStack {
-            Color.forgeBackground.ignoresSafeArea()
+            SwiftUI.Color.forgeBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Top bar
@@ -208,33 +208,33 @@ struct ModePlaceholderView: View {
                 VStack(spacing: 20) {
                     Image(systemName: mode.icon)
                         .font(.system(size: 56, weight: .light))
-                        .foregroundStyle(Color.forgeAccent)
+                        .foregroundStyle(SwiftUI.Color.forgeAccent)
                         .forgeGlow(radius: 16)
 
                     Text(mode.rawValue)
                         .font(.forgeHeadline)
-                        .foregroundStyle(Color.forgePrimaryText)
+                        .foregroundStyle(SwiftUI.Color.forgePrimaryText)
                         .tracking(2)
 
                     Text(mode.subtitle)
                         .font(.forgeBody)
-                        .foregroundStyle(Color.forgeSecondaryText)
+                        .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
 
                     if let project = appState.currentProject {
                         Divider()
                             .frame(width: 200)
-                            .background(Color.forgeBorder)
+                            .background(SwiftUI.Color.forgeBorder)
 
                         VStack(spacing: 4) {
                             Text("Active Project")
                                 .font(.forgeMicro)
-                                .foregroundStyle(Color.forgeSecondaryText)
+                                .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
 
                             Text(project.name)
                                 .font(.forgeBodyMono)
-                                .foregroundStyle(Color.forgeAccent)
+                                .foregroundStyle(SwiftUI.Color.forgeAccent)
                         }
                     }
                 }

@@ -293,11 +293,11 @@ struct ForgeCardBackground: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .background(isElevated ? Color.forgeElevated : Color.forgeSurface)
+            .background(isElevated ? SwiftUI.Color.forgeElevated : SwiftUI.Color.forgeSurface)
             .clipShape(RoundedRectangle(cornerRadius: ForgeMetrics.cardCornerRadius, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: ForgeMetrics.cardCornerRadius, style: .continuous)
-                    .stroke(showBorder ? Color.forgeBorder : Color.clear, lineWidth: 1)
+                    .stroke(showBorder ? SwiftUI.Color.forgeBorder : SwiftUI.Color.clear, lineWidth: 1)
             )
     }
 }
@@ -309,7 +309,7 @@ extension View {
     }
 
     /// Apply FORGE accent glow (cyan shadow).
-    func forgeGlow(color: Color = .forgeAccent, radius: CGFloat = 8) -> some View {
+    func forgeGlow(color: SwiftUI.Color = .forgeAccent, radius: CGFloat = 8) -> some View {
         shadow(color: color.opacity(0.3), radius: radius, x: 0, y: 0)
     }
 }

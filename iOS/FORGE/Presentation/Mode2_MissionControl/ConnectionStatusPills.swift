@@ -38,7 +38,7 @@ struct ConnectionStatusPills: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
         }
-        .background(Color.forgeSurface)
+        .background(SwiftUI.Color.forgeSurface)
     }
 
     // MARK: - Pill
@@ -62,10 +62,10 @@ struct ConnectionStatusPills: View {
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(Color.forgeElevated)
+            .background(SwiftUI.Color.forgeElevated)
             .clipShape(Capsule())
             .overlay(
-                Capsule().stroke(Color.forgeBorder, lineWidth: 1)
+                Capsule().stroke(SwiftUI.Color.forgeBorder, lineWidth: 1)
             )
         }
         .buttonStyle(PlainButtonStyle())
