@@ -23,10 +23,7 @@ settings:
 packages:
   SwiftTerm:
     url: https://github.com/migueldeicaza/SwiftTerm
-    from: "2.0.0"
-  SwiftLibgit2:
-    url: https://github.com/swift-developer-tools/swift-libgit2
-    from: "1.0.0"
+    from: "1.15.0"
 targets:
   FORGE:
     type: application
@@ -44,10 +41,6 @@ targets:
     dependencies:
       - package: SwiftTerm
         product: SwiftTerm
-      - package: SwiftLibgit2
-        product: SwiftLibgit2
-      - package: SwiftLibgit2
-        product: CLibgit2
     info:
       path: iOS/FORGE/Info.plist
       properties:
