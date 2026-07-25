@@ -56,9 +56,9 @@ struct ForgeTerminalView: UIViewRepresentable {
         view.changeScrollback(5000)
 
         // Scroll behaviour — preserve vertical rubber-banding (§18.3).
-        view.scrollView.bounces = true
-        view.scrollView.alwaysBounceHorizontal = false
-        view.scrollView.showsVerticalScrollIndicator = true
+        view.bounces = true
+        view.alwaysBounceHorizontal = false
+        view.showsVerticalScrollIndicator = true
 
         // Publish the created view to the binding on the next run loop so
         // SwiftUI's update cycle is not interrupted.

@@ -1,5 +1,4 @@
 import Foundation
-import WebKit
 
 /// ForgeGitManager (Stub — Phase 2 will add libgit2 via direct C bindings)
 ///
@@ -18,20 +17,12 @@ final class ForgeGitManager {
 
     func gitOperation(
         _ args: [String: Any],
-        callbackId: String?,
-        webView: WKWebView?,
-        projectRoot: String
+        operation: String,
+        projectRoot: String,
+        resolve: @escaping (Any) -> Void,
+        reject: @escaping (String) -> Void
     ) {
-        guard let operation = args["operation"] as? String, let cbId = callbackId else {
-            ForgeEngine.reject(webView, callbackId, "Missing operation")
-            return
-        }
-
         queue.async {
-            // Phase 2: Real libgit2 implementation
-            // For now, return a clear message so the agent knows Git isn't available
-            let result: Any
-
             switch operation {
             case "init":
                 // Create a .git directory placeholder
@@ -44,39 +35,33 @@ final class ForgeGitManager {
                     toFile: (gitDir as NSString).appendingPathComponent("HEAD"),
                     atomically: true, encoding: .utf8
                 )
-                result = true
+                resolve(true)
 
             case "status":
-                // Return empty status — no staged/modified/untracked files
-                result = [
+                // Return empty status
+                resolve([
                     "staged": [[String: Any]](),
                     "modified": [[String: Any]](),
                     "untracked": [[String: Any]]()
-                ] as [String: Any]
+                ] as [String: Any])
 
             case "log":
-                // Return empty log
-                result = [[String: Any]]()
+                resolve([[String: Any]]())
 
             case "diff":
-                result = ""
+                resolve("")
 
             case "add", "commit", "push", "pull", "fetch":
-                // These require libgit2 — return informative error
-                result = [
+                resolve([
                     "success": false,
-                    "message": "Git operations require libgit2 (Phase 2 feature). File was not modified."
-                ] as [String: Any]
+                    "message": "Git operations require libgit2 (Phase 2 feature)."
+                ] as [String: Any])
 
             default:
-                result = ["success": false, "message": "Unknown git operation: \(operation)"]
+                reject("Unknown git operation: \(operation)")
             }
-
-            ForgeEngine.resolve(webView, cbId, result)
         }
     }
-
-    // MARK: - Utility
 
     /// Creates a basic .gitignore file in the project root
     func createDefaultGitignore(at projectRoot: String) {
