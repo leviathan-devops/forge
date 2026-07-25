@@ -9,7 +9,7 @@
     rsvg-convert -w 1024 -h 1024 AppIcon.svg -o Icon-1024.png
 
     # Using Inkscape (CLI):
-    inkscape -w 1024 -h 1024 AppIcon.svg --export-filename=Icon-1024.png
+    inkscape -w 1024 -h 1024 AppIcon.svg -export-filename=Icon-1024.png
 
     # Using ImageMagick:
     convert -density 300 -resize 1024x1024 AppIcon.svg Icon-1024.png
