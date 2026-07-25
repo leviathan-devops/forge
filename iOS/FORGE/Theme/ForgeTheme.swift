@@ -16,34 +16,34 @@ import SwiftTerm
 
 extension SwiftUI.Color {
     /// Near-black app background. Hex 0A0A0F.
-    static let forgeBackground = Color(red: 0x0A/255, green: 0x0A/255, blue: 0x0F/255)
+    static let forgeBackground = SwiftUI.Color(red: 0x0A/255, green: 0x0A/255, blue: 0x0F/255)
 
     /// Card / panel surface. Hex 1A1A24.
-    static let forgeSurface = Color(red: 0x1A/255, green: 0x1A/255, blue: 0x24/255)
+    static let forgeSurface = SwiftUI.Color(red: 0x1A/255, green: 0x1A/255, blue: 0x24/255)
 
     /// Overlays and sheets (slightly darker than surface). Hex 12121A.
-    static let forgeElevated = Color(red: 0x12/255, green: 0x12/255, blue: 0x1A/255)
+    static let forgeElevated = SwiftUI.Color(red: 0x12/255, green: 0x12/255, blue: 0x1A/255)
 
     /// Electric cyan accent — the sole accent color. Hex 00F0FF.
-    static let forgeAccent = Color(red: 0x00/255, green: 0xF0/255, blue: 0xFF/255)
+    static let forgeAccent = SwiftUI.Color(red: 0x00/255, green: 0xF0/255, blue: 0xFF/255)
 
     /// Body text. Hex E0E0E0.
-    static let forgePrimaryText = Color(red: 0xE0/255, green: 0xE0/255, blue: 0xE0/255)
+    static let forgePrimaryText = SwiftUI.Color(red: 0xE0/255, green: 0xE0/255, blue: 0xE0/255)
 
     /// Captions and labels. Hex 888888.
-    static let forgeSecondaryText = Color(red: 0x88/255, green: 0x88/255, blue: 0x88/255)
+    static let forgeSecondaryText = SwiftUI.Color(red: 0x88/255, green: 0x88/255, blue: 0x88/255)
 
     /// Pass / success states. Hex 50FA7B.
-    static let forgeSuccess = Color(red: 0x50/255, green: 0xFA/255, blue: 0x7B/255)
+    static let forgeSuccess = SwiftUI.Color(red: 0x50/255, green: 0xFA/255, blue: 0x7B/255)
 
     /// Audit / warning phases. Hex F1FA8C.
-    static let forgeWarning = Color(red: 0xF1/255, green: 0xFA/255, blue: 0x8C/255)
+    static let forgeWarning = SwiftUI.Color(red: 0xF1/255, green: 0xFA/255, blue: 0x8C/255)
 
     /// Failure / error states. Hex FF5555.
-    static let forgeError = Color(red: 0xFF/255, green: 0x55/255, blue: 0x55/255)
+    static let forgeError = SwiftUI.Color(red: 0xFF/255, green: 0x55/255, blue: 0x55/255)
 
     /// Card stroke — accent at 20 % opacity.
-    static let forgeBorder = Color(red: 0x00/255, green: 0xF0/255, blue: 0xFF/255).opacity(0.2)
+    static let forgeBorder = SwiftUI.Color(red: 0x00/255, green: 0xF0/255, blue: 0xFF/255).opacity(0.2)
 }
 
 // MARK: - UIColor Palette
@@ -193,13 +193,13 @@ struct ForgeTheme {
 
 extension SwiftUI.Color {
     /// Purple accent. Hex BD93F9.
-    static let forgePurple = Color(red: 0xBD/255, green: 0x93/255, blue: 0xF9/255)
+    static let forgePurple = SwiftUI.Color(red: 0xBD/255, green: 0x93/255, blue: 0xF9/255)
 
     /// Pink accent. Hex FF79C6.
-    static let forgePink = Color(red: 0xFF/255, green: 0x79/255, blue: 0xC6/255)
+    static let forgePink = SwiftUI.Color(red: 0xFF/255, green: 0x79/255, blue: 0xC6/255)
 
     /// Orange accent. Hex FFB86C.
-    static let forgeOrange = Color(red: 0xFF/255, green: 0xB8/255, blue: 0x6C/255)
+    static let forgeOrange = SwiftUI.Color(red: 0xFF/255, green: 0xB8/255, blue: 0x6C/255)
 
     /// Green alias. Hex 50FA7B.
     static let forgeGreen = forgeSuccess
