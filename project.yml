@@ -35,9 +35,13 @@ targets:
       - path: iOS/FORGE/Bridge
       - path: iOS/FORGE/Gestures
       - path: iOS/FORGE/Security
+      - path: iOS/FORGE/Resources/LaunchScreen.storyboard
     resources:
-      - path: iOS/FORGE/Resources
+      - path: iOS/FORGE/Resources/Assets.xcassets
         type: folder
+      - path: iOS/FORGE/Resources/forge-config.json
+      - path: iOS/FORGE/Resources/forge-identity.md
+      - path: iOS/FORGE/Resources/AppIcon.svg
     dependencies:
       - package: SwiftTerm
         product: SwiftTerm
@@ -46,8 +50,7 @@ targets:
       properties:
         CFBundleName: FORGE
         CFBundleDisplayName: FORGE
-        UILaunchScreen:
-          UIColorName: ForgeBackground
+        UILaunchStoryboardName: LaunchScreen
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
@@ -68,6 +71,8 @@ targets:
     settings:
       base:
         PRODUCT_NAME: FORGE
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
 
   FORGEUITests:
     type: bundle.ui-testing

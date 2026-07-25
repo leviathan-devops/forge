@@ -33,13 +33,7 @@ struct MissionControlScreen: View {
                 topBar
                 ConnectionStatusPills(connectionManager: connectionManager)
 
-                if connectionManager.sessions.isEmpty {
-                    emptyState
-                } else if isInEagleVision {
-                    eagleVisionGrid
-                } else {
-                    sessionPager
-                }
+                contentArea
             }
         }
         .preferredColorScheme(.dark)
@@ -54,6 +48,70 @@ struct MissionControlScreen: View {
         .sheet(isPresented: $showingServerPicker) {
             ServerPickerSheet(connectionManager: connectionManager)
         }
+    }
+
+    // MARK: - Content area (state-driven)
+
+    /// Renders the appropriate content based on connection state:
+    /// 1. No servers configured at all → noServersState
+    /// 2. Servers exist, at least one connecting, no sessions yet → connectingState
+    /// 3. Servers exist, all failed, no sessions → connectionErrorState
+    /// 4. Servers exist, connected but no sessions → emptySessionsState
+    /// 5. Sessions available → pager or Eagle Vision grid
+    @ViewBuilder
+    private var contentArea: some View {
+        if connectionManager.savedServers.isEmpty {
+            noServersState
+        } else if connectionManager.sessions.isEmpty {
+            if isAnyServerConnecting {
+                connectingState
+            } else if hasConnectionErrors {
+                connectionErrorState
+            } else {
+                emptySessionsState
+            }
+        } else if isInEagleVision {
+            eagleVisionGrid
+        } else {
+            sessionPager
+        }
+    }
+
+    // MARK: - State helpers
+
+    /// True when any saved server has `.connecting` status (§Task 3).
+    private var isAnyServerConnecting: Bool {
+        connectionManager.serverStatus.values.contains { status in
+            if case .connecting = status { return true }
+            return false
+        }
+    }
+
+    /// True when at least one server has an error status and none are
+    /// connected (§Task 3).
+    private var hasConnectionErrors: Bool {
+        let statuses = connectionManager.serverStatus.values
+        let hasError = statuses.contains { status in
+            if case .error = status { return true }
+            return false
+        }
+        let hasConnected = statuses.contains { status in
+            if case .connected = status { return true }
+            return false
+        }
+        return hasError && !hasConnected
+    }
+
+    /// The first server that has an error, used to display the hostname in
+    /// the connection failed message (§Task 3).
+    private var firstFailedServer: ConnectionManager.ServerConnection? {
+        for server in connectionManager.savedServers {
+            let status = connectionManager.serverStatus[server.id.uuidString] ?? .disconnected
+            if case .error = status {
+                return server
+            }
+        }
+        return nil
     }
 
     // MARK: - Top bar
@@ -146,17 +204,18 @@ struct MissionControlScreen: View {
         .transition(.opacity.combined(with: .scale(scale: 0.95)))
     }
 
-    // MARK: - Empty state
+    // MARK: - No servers configured (§Task 3)
 
-    private var emptyState: some View {
+    /// Shown when the user has not added any servers yet.
+    private var noServersState: some View {
         VStack(spacing: 20) {
             Image(systemName: "antenna.radiowaves.left.and.right")
                 .font(.system(size: 56))
                 .foregroundColor(.forgeSecondaryText)
-            Text("No Sessions")
+            Text("No Servers Configured")
                 .font(.forgeTitle)
                 .foregroundColor(.forgePrimaryText)
-            Text("Add an opencode server to discover sessions.")
+            Text("No servers configured. Tap + to add an opencode server.")
                 .font(.forgeBody)
                 .foregroundColor(.forgeSecondaryText)
                 .multilineTextAlignment(.center)
@@ -176,6 +235,109 @@ struct MissionControlScreen: View {
                 .background(SwiftUI.Color.forgeAccent)
                 .clipShape(Capsule())
             }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 32)
+    }
+
+    // MARK: - Connecting state (§Task 3)
+
+    /// Shown while at least one server is being contacted, before any
+    /// sessions have appeared.
+    private var connectingState: some View {
+        VStack(spacing: 20) {
+            ProgressView()
+                .progressViewStyle(.circular)
+                .tint(SwiftUI.Color.forgeAccent)
+                .scaleEffect(1.5)
+
+            Text("Connecting…")
+                .font(.forgeHeadline)
+                .foregroundColor(.forgePrimaryText)
+
+            Text("Contacting opencode servers for active sessions.")
+                .font(.forgeBody)
+                .foregroundColor(.forgeSecondaryText)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 32)
+    }
+
+    // MARK: - Connection error state (§Task 3)
+
+    /// Shown when all configured servers failed to connect and no sessions
+    /// were retrieved.
+    private var connectionErrorState: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 48))
+                .foregroundColor(.forgeError)
+
+            Text("Connection Failed")
+                .font(.forgeTitle)
+                .foregroundColor(.forgePrimaryText)
+
+            if let server = firstFailedServer {
+                Text("Cannot reach \(server.hostname). Check that opencode is running.")
+                    .font(.forgeBody)
+                    .foregroundColor(.forgeSecondaryText)
+                    .multilineTextAlignment(.center)
+            } else {
+                Text("Cannot reach server. Check that opencode is running.")
+                    .font(.forgeBody)
+                    .foregroundColor(.forgeSecondaryText)
+                    .multilineTextAlignment(.center)
+            }
+
+            Button {
+                ForgeHaptics.tap()
+                for server in connectionManager.savedServers {
+                    connectionManager.refreshSessions(for: server)
+                }
+            } label: {
+                HStack {
+                    Image(systemName: "arrow.clockwise")
+                    Text("Retry Connection")
+                }
+                .font(.forgeHeadline)
+                .foregroundColor(.forgeAccent)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .background(SwiftUI.Color.forgeElevated)
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(SwiftUI.Color.forgeBorder, lineWidth: 1))
+            }
+
+            Button {
+                ForgeHaptics.tap()
+                showingServerPicker = true
+            } label: {
+                Text("Configure Servers")
+                    .font(.forgeCaption)
+                    .foregroundColor(.forgeSecondaryText)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 32)
+    }
+
+    // MARK: - No sessions (connected but empty)
+
+    /// Shown when servers are connected (or disconnected without errors) but
+    /// no active sessions were found.
+    private var emptySessionsState: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "rectangle.stack.badge.plus")
+                .font(.system(size: 56))
+                .foregroundColor(.forgeSecondaryText)
+            Text("No Active Sessions")
+                .font(.forgeTitle)
+                .foregroundColor(.forgePrimaryText)
+            Text("Connected servers have no active sessions. Start a session in opencode to see it here.")
+                .font(.forgeBody)
+                .foregroundColor(.forgeSecondaryText)
+                .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.horizontal, 32)

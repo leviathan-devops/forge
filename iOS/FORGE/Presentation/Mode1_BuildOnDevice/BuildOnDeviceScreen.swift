@@ -43,8 +43,41 @@ struct BuildOnDeviceScreen: View {
     /// Tracks whether the engine has signalled ready.
     @State private var isReady = false
 
+    /// Tracks whether the engine is currently loading (between startEngine
+    /// and either readyHandler or errorHandler).
+    @State private var isLoading = false
+
+    /// Tracks whether the forge-bundle.js resource exists in the app bundle.
+    /// Determined once at startup so the welcome message can reflect reality.
+    @State private var hasBundle = false
+
+    /// Whether the placeholder content has already been fed to the terminal.
+    /// Prevents duplicate feeds when the view re-renders.
+    @State private var didFeedPlaceholder = false
+
     /// Background task identifier for graceful pause (§25.2).
     @State private var backgroundTaskId: UIBackgroundTaskIdentifier = .invalid
+
+    // MARK: - Computed properties
+
+    /// Whether an API key is stored in the keychain.
+    private var hasAPIKey: Bool {
+        KeychainHelper.exists(for: ForgeSettingsKeys.apiKey)
+    }
+
+    /// The network status to display in the top bar.
+    /// - Red when no API key is configured.
+    /// - Yellow when a key exists but the engine hasn't verified reachability.
+    /// - Green when the engine is ready (key was injected successfully).
+    private var networkStatus: NetworkStatus {
+        if !hasAPIKey {
+            return .missing
+        } else if isReady {
+            return .configured
+        } else {
+            return .unverified
+        }
+    }
 
     var body: some View {
         ZStack {
@@ -59,18 +92,33 @@ struct BuildOnDeviceScreen: View {
                     onRightTap: {
                         ForgeHaptic.impact(.light)
                         showingSettings = true
-                    }
+                    },
+                    networkStatus: networkStatus,
+                    rightIconNeedsAttention: !hasAPIKey
                 )
 
-                if let errorMessage = errorMessage, !isReady {
-                    errorView(errorMessage)
-                } else {
-                    ForgeTerminalView(
-                        terminalView: $terminalView,
-                        onSend: { data in handleSend(data) },
-                        onResize: { cols, rows in handleResize(cols: cols, rows: rows) }
-                    )
-                    .ignoresSafeArea(.container, edges: [.bottom])
+                // Always keep the terminal alive so its state is not lost when
+                // overlays appear/disappear. Overlays sit on top.
+                ForgeTerminalView(
+                    terminalView: $terminalView,
+                    onSend: { data in handleSend(data) },
+                    onResize: { cols, rows in handleResize(cols: cols, rows: rows) }
+                )
+                .ignoresSafeArea(.container, edges: [.bottom])
+                .overlay {
+                    // Loading placeholder — shown while the engine boots
+                    // and before the terminal has content (§Task 1).
+                    if isLoading && !isReady && errorMessage == nil {
+                        loadingPlaceholder
+                            .transition(.opacity)
+                    }
+
+                    // Error placeholder — replaces the terminal visually when
+                    // the engine fails to load (§Task 1).
+                    if let errorMessage = errorMessage, !isReady {
+                        errorView(errorMessage)
+                            .transition(.opacity)
+                    }
                 }
             }
         }
@@ -79,6 +127,13 @@ struct BuildOnDeviceScreen: View {
         .statusBarHidden(true)
         .onAppear { startEngine() }
         .onDisappear { stopEngine() }
+        .onChange(of: terminalView != nil) { _, isAvailable in
+            // Feed placeholder text the moment the terminal becomes ready to
+            // receive input — before the JS engine finishes loading (§Task 1).
+            if isAvailable && !didFeedPlaceholder {
+                feedPlaceholderContent()
+            }
+        }
         .onChange(of: appState.currentProject) { _, newProject in
             if let project = newProject {
                 applyProject(project)
@@ -132,6 +187,86 @@ struct BuildOnDeviceScreen: View {
             .foregroundStyle(SwiftUI.Color.forgeAccent)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(SwiftUI.Color.forgeBackground.opacity(0.97))
+    }
+
+    // MARK: - Loading placeholder
+
+    /// Shown while the engine boots, before the terminal has meaningful
+    /// content. A spinner sits over the terminal, which already has the
+    /// welcome banner text (§Task 1).
+    private var loadingPlaceholder: some View {
+        VStack(spacing: 20) {
+            ProgressView()
+                .progressViewStyle(.circular)
+                .tint(SwiftUI.Color.forgeAccent)
+                .scaleEffect(1.3)
+
+            Text("Initializing engine…")
+                .font(.forgeCaption)
+                .foregroundStyle(SwiftUI.Color.forgeSecondaryText)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(SwiftUI.Color.forgeBackground.opacity(0.85))
+    }
+
+    // MARK: - Placeholder content (§Task 1 & §Task 2)
+
+    /// Feeds the welcome banner and API-key warning directly into the terminal
+    /// via the engine's output handler. This text appears immediately on
+    /// screen, before (or instead of) any JS engine output.
+    private func feedPlaceholderContent() {
+        guard terminalView != nil else { return }
+        didFeedPlaceholder = true
+
+        // ── Welcome banner (§Task 1) ────────────────────────────────────
+        //
+        // Cyan for the version line (ANSI bright cyan / SGR 96), dim for the
+        // subtitle, and a plain prompt cursor at the end.
+        let banner: String
+        if hasBundle {
+            banner = """
+            \u{001b}[96mFORGE v1.0.0\u{001b}[0m — Trident T3 Audit Engine\r\n\
+            Loading agent bundle…\r\n\
+            \r\n\
+            > \u{001b}[5m_\u{001b}[0m
+            """
+        } else {
+            banner = """
+            \u{001b}[96mFORGE v1.0.0\u{001b}[0m — Trident T3 Audit Engine\r\n\
+            \u{001b}[2mNo agent bundle loaded. Configure API key in Settings to start.\u{001b}[0m\r\n\
+            \r\n\
+            > \u{001b}[5m_\u{001b}[0m
+            """
+        }
+
+        // Route through the engine's output handler so all terminal writes
+        // pass through a single pipeline (§Task 1). Falls back to a direct
+        // feed if the engine isn't available yet.
+        if let outputHandler = engine?.outputHandler {
+            outputHandler(banner)
+        } else {
+            terminalView?.feed(text: banner)
+        }
+
+        // ── API key warning (§Task 2) ──────────────────────────────────
+        //
+        // Yellow ANSI (SGR 33) for the warning header, then dim instructions.
+        if !hasAPIKey {
+            let warning = """
+
+            \r\n\
+            \u{001b}[33m⚠ No API Key Configured\u{001b}[0m\r\n\
+            \u{001b}[2mOpen Settings (gear icon) to configure your LLM provider and API key.\u{001b}[0m\r\n\
+            \r\n
+            """
+
+            if let outputHandler = engine?.outputHandler {
+                outputHandler(warning)
+            } else {
+                terminalView?.feed(text: warning)
+            }
+        }
     }
 
     // MARK: - Engine lifecycle
@@ -139,6 +274,18 @@ struct BuildOnDeviceScreen: View {
     private func startEngine() {
         // Tear down any previous engine before creating a new one.
         if engine != nil { stopEngine() }
+
+        // Reset state for this attempt.
+        isLoading = true
+        isReady = false
+        errorMessage = nil
+        didFeedPlaceholder = false
+
+        // Detect whether the JS bundle exists so the placeholder text can
+        // reflect reality (§Task 1).
+        hasBundle = Bundle.main.url(
+            forResource: "forge-bundle", withExtension: "js"
+        ) != nil
 
         let newBridge = ForgeBridge()
         let newEngine = ForgeEngine(bridge: newBridge)
@@ -150,6 +297,7 @@ struct BuildOnDeviceScreen: View {
 
         // Wire ready signal.
         newEngine.readyHandler = {
+            isLoading = false
             isReady = true
             terminalView?.feed(
                 text: "\u{001b}[36mFORGE engine ready.\u{001b}[0m\r\n"
@@ -158,6 +306,7 @@ struct BuildOnDeviceScreen: View {
 
         // Wire errors.
         newEngine.errorHandler = { message in
+            isLoading = false
             errorMessage = message
         }
 
@@ -178,6 +327,12 @@ struct BuildOnDeviceScreen: View {
             applyProject(last)
         }
 
+        // Feed the placeholder content now if the terminal is already alive
+        // (e.g. retry). Otherwise onChange(of: terminalView) handles it.
+        if terminalView != nil && !didFeedPlaceholder {
+            feedPlaceholderContent()
+        }
+
         // Load the bundle — the bootstrap will fire __ready when done.
         newEngine.loadBundle()
     }
@@ -188,6 +343,10 @@ struct BuildOnDeviceScreen: View {
         engine = nil
         bridge = nil
         terminalView = nil
+        isLoading = false
+        isReady = false
+        errorMessage = nil
+        didFeedPlaceholder = false
     }
 
     // MARK: - Project application

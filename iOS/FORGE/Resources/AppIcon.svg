@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FORGE App Icon — SVG Source
+
+  This SVG serves as the design source for the FORGE app icon.
+  To generate PNG icons for App Store submission:
+
+    # Using rsvg-convert (Linux):
+    rsvg-convert -w 1024 -h 1024 AppIcon.svg -o Icon-1024.png
+
+    # Using Inkscape (CLI):
+    inkscape -w 1024 -h 1024 AppIcon.svg --export-filename=Icon-1024.png
+
+    # Using ImageMagick:
+    convert -density 300 -resize 1024x1024 AppIcon.svg Icon-1024.png
+
+  Place the generated Icon-1024.png in:
+    Assets.xcassets/AppIcon.appiconset/Icon-1024.png
+
+  Xcode will automatically generate all required sizes from the single
+  1024×1024 source (iOS 14+ single-size workflow).
+
+  Design:
+    - Background: 0A0A0F (forgeBackground)
+    - Accent:     00F0FF (forgeAccent / electric cyan)
+    - Typography: Monospaced (JetBrains Mono aesthetic)
+    - Concept:    Bold stylized "F" with a cyan underline — the FORGE brand mark.
+-->
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1024"
+     height="1024"
+     viewBox="0 0 1024 1024">
+
+  <!-- Background: forge dark (0A0A0F) -->
+  <rect width="1024" height="1024" rx="224" ry="224" fill="#0A0A0F"/>
+
+  <!-- Subtle inner glow ring -->
+  <rect x="40" y="40" width="944" height="944" rx="200" ry="200"
+        fill="none" stroke="#00F0FF" stroke-width="2" opacity="0.08"/>
+
+  <!-- "F" letterform — constructed from geometric rectangles for crisp edges -->
+  <!-- Vertical stem of the F -->
+  <rect x="340" y="280" width="90" height="464" rx="8" fill="#00F0FF"/>
+
+  <!-- Top horizontal bar of the F -->
+  <rect x="340" y="280" width="340" height="90" rx="8" fill="#00F0FF"/>
+
+  <!-- Middle horizontal bar of the F (shorter) -->
+  <rect x="430" y="470" width="250" height="74" rx="8" fill="#00F0FF"/>
+
+  <!-- Cyan accent underline beneath the F -->
+  <rect x="340" y="790" width="340" height="6" rx="3" fill="#00F0FF" opacity="0.6"/>
+
+</svg>
