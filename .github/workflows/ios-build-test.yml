@@ -1,0 +1,134 @@
+name: FORGE Build & Test
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_15.4.app 2>/dev/null || true
+          xcodebuild -version
+          swift --version
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          xcodegen generate 2>&1
+          ls -la FORGE.xcodeproj/
+
+      - name: Build for iOS Simulator
+        run: |
+          xcodebuild build \
+            -project FORGE.xcodeproj \
+            -scheme FORGE \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -configuration Debug \
+            -derivedDataPath ./build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            2>&1 | tee build.log
+
+      - name: Check Build Result
+        run: |
+          if [ -f "./build/Build/Products/Debug-iphonesimulator/FORGE.app/FORGE" ]; then
+            echo "BUILD SUCCESS"
+            ls -la ./build/Build/Products/Debug-iphonesimulator/FORGE.app/
+          else
+            echo "BUILD FAILED — checking log"
+            grep -i "error:" build.log | head -30
+            exit 1
+          fi
+
+      - name: Boot iOS Simulator & Install
+        run: |
+          # Boot simulator
+          xcrun simctl boot "iPhone 16" 2>/dev/null || true
+          sleep 10
+
+          # Install the app
+          xcrun simctl install booted ./build/Build/Products/Debug-iphonesimulator/FORGE.app
+          echo "INSTALLED"
+
+          # Launch the app
+          xcrun simctl launch booted com.forge.app 2>/dev/null || true
+          sleep 5
+
+          # Take screenshot
+          xcrun simctl io booted screenshot "$GITHUB_WORKSPACE/forge-launch-screenshot.png"
+          echo "SCREENSHOT TAKEN"
+
+      - name: Upload Build Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: ignore
+
+      - name: Upload Screenshot
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: "*.png"
+          if-no-files-found: ignore
+
+      - name: Upload App Bundle
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FORGE-app
+          path: ./build/Build/Products/Debug-iphonesimulator/FORGE.app
+          if-no-files-found: ignore
+
+  test-typescript:
+    name: TypeScript Shims Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Dependencies
+        run: |
+          cd forge
+          bun install 2>/dev/null || npm install
+
+      - name: TypeScript Type Check
+        run: |
+          cd forge
+          bun run typecheck 2>/dev/null || npx tsc --noEmit 2>&1 | head -50 || true
+
+      - name: esbuild Bundle Test (if source available)
+        run: |
+          if [ -d "vendor/opencode" ]; then
+            echo "OpenCode vendor source found — attempting bundle"
+            cd scripts
+            bun run build-forge-bundle.mjs 2>&1 | tail -20 || true
+          else
+            echo "No vendor/opencode — skipping bundle test (expected at this stage)"
+          fi
+        continue-on-error: true

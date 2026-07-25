@@ -1,0 +1,77 @@
+name: FORGE
+options:
+  bundleIdPrefix: com.forge
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    INFOPLIST_FILE: iOS/FORGE/Info.plist
+    CODE_SIGN_ENTITLEMENTS: iOS/FORGE/FORGE.entitlements
+    CODE_SIGN_IDENTITY: ""
+    CODE_SIGNING_REQUIRED: "NO"
+    CODE_SIGNING_ALLOWED: "NO"
+    DEVELOPMENT_TEAM: ""
+    PRODUCT_BUNDLE_IDENTIFIER: com.forge.app
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_BITCODE: "NO"
+    ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: "YES"
+packages:
+  SwiftTerm:
+    url: https://github.com/migueldeicaza/SwiftTerm
+    from: "2.0.0"
+  SwiftLibgit2:
+    url: https://github.com/swift-developer-tools/swift-libgit2
+    from: "1.0.0"
+targets:
+  FORGE:
+    type: application
+    platform: iOS
+    sources:
+      - path: iOS/FORGE/App
+      - path: iOS/FORGE/Theme
+      - path: iOS/FORGE/Presentation
+      - path: iOS/FORGE/Bridge
+      - path: iOS/FORGE/Gestures
+      - path: iOS/FORGE/Security
+    resources:
+      - path: iOS/FORGE/Resources
+        type: folder
+    dependencies:
+      - package: SwiftTerm
+        product: SwiftTerm
+      - package: SwiftLibgit2
+        product: SwiftLibgit2
+      - package: SwiftLibgit2
+        product: CLibgit2
+    info:
+      path: iOS/FORGE/Info.plist
+      properties:
+        CFBundleName: FORGE
+        CFBundleDisplayName: FORGE
+        UILaunchScreen:
+          UIColorName: ForgeBackground
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UIStatusBarStyle: UIStatusBarStyleLightContent
+        UIAppFonts:
+          - JetBrainsMono-Regular.ttf
+          - JetBrainsMono-Bold.ttf
+          - JetBrainsMono-SemiBold.ttf
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+          NSExceptionDomains:
+            localhost:
+              NSExceptionAllowsInsecureHTTPLoads: true
+        NSLocalNetworkUsageDescription: "FORGE discovers opencode servers on your local network."
+        NSBonjourServices:
+          - _opencode._tcp
+    settings:
+      base:
+        PRODUCT_NAME: FORGE

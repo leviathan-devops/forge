@@ -1,0 +1,40 @@
+{
+  "name": "@forge/core",
+  "version": "1.0.0",
+  "description": "FORGE — Trident Agent TypeScript layer for iOS. Bundles opencode + Trident into a browser-compatible IIFE.",
+  "type": "module",
+  "main": "src/forge-entry.ts",
+  "scripts": {
+    "build": "node ../scripts/build-forge-bundle.mjs",
+    "dev": "node ../scripts/build-forge-bundle.mjs --dev --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf node_modules dist ../iOS/FORGE/Resources/forge-bundle.js ../iOS/FORGE/Resources/forge-bundle-manifest.json"
+  },
+  "dependencies": {
+    "path-browserify": "^1.0.1",
+    "sql.js": "^1.10.3"
+  },
+  "devDependencies": {
+    "esbuild": "^0.23.0",
+    "typescript": "^5.5.4",
+    "@types/node": "^20.14.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "bun": ">=1.1.0"
+  },
+  "keywords": [
+    "forge",
+    "trident",
+    "ios",
+    "opencode",
+    "audit",
+    "esbuild",
+    "bundle"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/forge/trident-ios"
+  }
+}

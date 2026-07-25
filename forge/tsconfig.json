@@ -1,0 +1,77 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "outDir": "./dist",
+    "rootDir": ".",
+    "strict": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": false,
+    "exactOptionalPropertyTypes": false,
+    "allowJs": true,
+    "checkJs": false,
+    "baseUrl": ".",
+    "paths": {
+      "@opencode/*": ["./vendor/opencode/*"],
+      "opencode": ["./vendor/opencode/index.ts"],
+      "opencode/config": ["./vendor/opencode/config.ts"],
+      "opencode/session": ["./vendor/opencode/session.ts"],
+      "opencode/agent": ["./vendor/opencode/agent.ts"],
+      "opencode/plugin": ["./vendor/opencode/plugin.ts"],
+      "opencode/provider": ["./vendor/opencode/provider.ts"],
+      "@trident/plugin": ["./vendor/trident/plugin.ts"],
+      "@trident/plugin/*": ["./vendor/trident/*"],
+      "@forge/identity": ["./src/forge-identity.ts"],
+      "@forge/runtime": ["./src/forge-runtime.ts"],
+      "@forge/terminal": ["./src/forge-terminal-surface.ts"],
+      "@forge/entry": ["./src/forge-entry.ts"],
+      "@forge/shims/*": ["./shims/*"],
+      "@forge/fs": ["./shims/forge-fs.ts"],
+      "@forge/process": ["./shims/forge-process.ts"],
+      "@forge/crypto": ["./shims/forge-crypto.ts"],
+      "@forge/os": ["./shims/forge-os.ts"],
+      "@forge/events": ["./shims/forge-events.ts"],
+      "@forge/stream": ["./shims/forge-stream.ts"],
+      "@forge/http": ["./shims/forge-http.ts"],
+      "@forge/url": ["./shims/forge-url.ts"],
+      "@forge/util": ["./shims/forge-util.ts"],
+      "@forge/buffer": ["./shims/forge-buffer.ts"],
+      "@forge/sqlite": ["./shims/forge-sqlite.ts"]
+    },
+    "types": ["node"],
+    "typeRoots": ["./node_modules/@types", "./types"]
+  },
+  "include": [
+    "src/**/*.ts",
+    "shims/**/*.ts",
+    "shims/**/*.js",
+    "vendor/**/*.ts",
+    "types/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ],
+  "ts-node": {
+    "esm": true,
+    "compilerOptions": {
+      "module": "ESNext"
+    }
+  }
+}

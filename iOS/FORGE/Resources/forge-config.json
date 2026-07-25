@@ -1,0 +1,150 @@
+{
+  "$schema": "https://opencode.ai/config.schema.json",
+  "forge": {
+    "version": "1.0.0",
+    "platform": "ios",
+    "target": "safari16"
+  },
+  "disableVanillaAgents": true,
+  "defaultAgent": "trident",
+  "maxIterations": 50,
+  "batteryAware": true,
+  "offlineMode": false,
+  "cacheEnabled": true,
+  "agents": {
+    "trident": {
+      "type": "default",
+      "identity": "forge-identity.md",
+      "config": {
+        "auditLayers": ["R0", "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9", "R10", "R11", "R12", "R13", "R14", "R15", "R16"],
+        "godLoop": {
+          "enabled": true,
+          "passThreshold": 0.96,
+          "maxCycles": 50
+        },
+        "containerTesting": {
+          "enabled": true,
+          "required": true
+        },
+        "evidence": {
+          "required": true,
+          "format": "sha256"
+        }
+      }
+    },
+    "build": {
+      "type": "subagent",
+      "model": "trident-build",
+      "tools": ["write", "edit", "read", "bash", "grep", "glob"],
+      "requiresPoseidon": true
+    },
+    "explore": {
+      "type": "subagent",
+      "model": "trident-explore",
+      "tools": ["read", "grep", "glob"],
+      "requiresPoseidon": false
+    }
+  },
+  "disabledAgents": [
+    "code",
+    "ask",
+    "minimal",
+    "general-purpose",
+    "planner"
+  ],
+  "providers": [
+    {
+      "id": "anthropic",
+      "name": "Anthropic",
+      "npm": "@ai-sdk/anthropic",
+      "options": {
+        "baseURL": "https://api.anthropic.com"
+      },
+      "models": {
+        "claude-sonnet-4-20250514": {
+          "name": "Claude Sonnet 4",
+          "contextWindow": 200000
+        },
+        "claude-opus-4-20250514": {
+          "name": "Claude Opus 4",
+          "contextWindow": 200000
+        }
+      }
+    },
+    {
+      "id": "openai",
+      "name": "OpenAI",
+      "npm": "@ai-sdk/openai",
+      "options": {
+        "baseURL": "https://api.openai.com/v1"
+      },
+      "models": {
+        "gpt-4o": {
+          "name": "GPT-4o",
+          "contextWindow": 128000
+        },
+        "o1": {
+          "name": "o1",
+          "contextWindow": 200000
+        }
+      }
+    },
+    {
+      "id": "google",
+      "name": "Google",
+      "npm": "@ai-sdk/google",
+      "options": {
+        "baseURL": "https://generativelanguage.googleapis.com"
+      },
+      "models": {
+        "gemini-2.0-flash": {
+          "name": "Gemini 2.0 Flash",
+          "contextWindow": 1000000
+        }
+      }
+    }
+  ],
+  "plugins": [
+    "trident"
+  ],
+  "storage": {
+    "type": "sqlite",
+    "driver": "sql.js",
+    "path": "/tmp/forge/forge.db",
+    "wal": false
+  },
+  "terminal": {
+    "type": "forge-surface",
+    "cols": 80,
+    "rows": 24,
+    "colors": 256,
+    "flushInterval": 16
+  },
+  "nativeBridge": {
+    "methods": [
+      "fs:readFile",
+      "fs:writeFile",
+      "fs:readdir",
+      "fs:stat",
+      "fs:unlink",
+      "fs:mkdir",
+      "fs:rm",
+      "fs:rename",
+      "fs:access",
+      "runCommand",
+      "getResource",
+      "getResourcePath",
+      "getBatteryLevel",
+      "getMemoryUsage",
+      "getAvailableMemory",
+      "getTerminalSize",
+      "chdir",
+      "exit",
+      "ready",
+      "output",
+      "error",
+      "log",
+      "renderFrame"
+    ]
+  }
+}
