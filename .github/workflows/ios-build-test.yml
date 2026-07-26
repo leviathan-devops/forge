@@ -112,6 +112,29 @@ jobs:
           fi
           echo "Collected $(ls ui-attachments/ 2>/dev/null | wc -l) xcresult attachments"
 
+      - name: Generate App Store Screenshots
+        # Runs after the build succeeds and UI tests complete. Uses the built
+        # FORGE.app and the iPhone 16 Pro Max simulator (6.7" — 1290x2796) to
+        # capture App Store submission screenshots.
+        #
+        # The script boots iPhone 16 Pro Max specifically (the build/UI-test
+        # steps use iPhone 16), captures the launch menu live via simctl, and
+        # pulls screen-specific shots from the UI test attachments directory.
+        run: |
+          chmod +x scripts/capture-screenshots.sh
+          ./scripts/capture-screenshots.sh \
+            ./build/Build/Products/Debug-iphonesimulator/FORGE.app \
+            screenshots/app-store \
+            ./ui-attachments
+
+      - name: Upload App Store Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-store-screenshots
+          path: screenshots/app-store/
+          if-no-files-found: warn
+
       - name: Upload Build Log
         if: always()
         uses: actions/upload-artifact@v4

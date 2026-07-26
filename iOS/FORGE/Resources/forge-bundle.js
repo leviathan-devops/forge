@@ -106,6 +106,27 @@
         write(ansi + ANSI.NL);
     }
 
+    /**
+     * Safely invokes a native bridge method via window.__forgeNative.call().
+     * Wraps the call in try-catch and supports both synchronous return values
+     * and Promise-based async returns.
+     *
+     * @param {string} method The native method name (e.g. 'listFiles').
+     * @param {Object} args   Arguments object to pass to the native method.
+     * @returns {*} The return value from the native call, or null on error.
+     */
+    function safeNativeCall(method, args) {
+        try {
+            if (!window.__forgeNative ||
+                typeof window.__forgeNative.call !== 'function') {
+                return null;
+            }
+            return window.__forgeNative.call(method, args || {});
+        } catch (e) {
+            return null;
+        }
+    }
+
     // =========================================================================
     // Section 3: Line Editor & Input Buffer
     // =========================================================================
@@ -116,6 +137,19 @@
      * On Enter, the full line is dispatched to the command processor.
      */
     var inputBuffer = '';
+
+    // -------------------------------------------------------------------------
+    // Session Statistics
+    // -------------------------------------------------------------------------
+
+    /** Timestamp (ms) when __forgeBootstrap was called. */
+    var sessionStartTime = 0;
+
+    /** Total number of commands entered this session. */
+    var commandCount = 0;
+
+    /** The last command entered by the user (for status display). */
+    var lastCommand = '(none)';
 
     /**
      * The prompt string displayed before user input.
@@ -242,6 +276,58 @@
     }
 
     /**
+     * Handles the Tab key for command auto-completion.
+     * - If the current buffer matches exactly one command, auto-completes it.
+     * - If multiple commands match, displays all matches below the current line.
+     * - If no matches, does nothing (or optionally beeps).
+     */
+    function handleTab() {
+        if (inputBuffer.length === 0) return;
+
+        // Collect matching command names.
+        var matches = [];
+        var cmdNames = Object.keys(commands);
+        for (var i = 0; i < cmdNames.length; i++) {
+            if (cmdNames[i].indexOf(inputBuffer) === 0) {
+                matches.push(cmdNames[i]);
+            }
+        }
+
+        if (matches.length === 0) {
+            // No match — optionally emit a subtle bell.
+            write('\x07');
+        } else if (matches.length === 1) {
+            // Exactly one match — complete the command.
+            var completion = matches[0];
+            if (completion.length > inputBuffer.length) {
+                var suffix = completion.slice(inputBuffer.length);
+                write(suffix);
+                inputBuffer = completion;
+            }
+            // Add a trailing space for convenience.
+            write(' ');
+            inputBuffer += ' ';
+        } else {
+            // Multiple matches — display them all on new lines, then re-show
+            // the prompt with the current input buffer.
+            writeln('');
+            var line = '';
+            for (var j = 0; j < matches.length; j++) {
+                line += color(matches[j], ANSI.CYAN);
+                if ((j + 1) % 4 === 0 || j === matches.length - 1) {
+                    writeln(line);
+                    line = '';
+                } else {
+                    line += '  ';
+                }
+            }
+            // Re-display the prompt and the current partial input.
+            showPrompt();
+            write(inputBuffer);
+        }
+    }
+
+    /**
      * Processes a completed input line when the user presses Enter.
      * Dispatches to the command processor, then shows a fresh prompt.
      */
@@ -252,6 +338,10 @@
 
         var trimmed = line.trim();
         if (trimmed.length > 0) {
+            // Track session statistics.
+            commandCount++;
+            lastCommand = trimmed;
+
             // Store in command history. Skip if identical to the most recent
             // entry to avoid consecutive duplicates.
             if (commandHistory.length === 0 ||
@@ -324,6 +414,14 @@
             ['help',    'Show this help message'],
             ['status',  'Show system status'],
             ['version', 'Show FORGE version info'],
+            ['about',   'Show FORGE description and credits'],
+            ['date',    'Show current date and time'],
+            ['echo',    'Echo text with ANSI color'],
+            ['whoami',  'Show current user'],
+            ['ls',      'List project files'],
+            ['cat',     'Read a file (cat <file>)'],
+            ['theme',   'Show current theme colors'],
+            ['matrix',  '??? (try it)'],
             ['clear',   'Clear the terminal screen']
         ];
         for (var i = 0; i < cmds.length; i++) {
@@ -334,6 +432,9 @@
         writeln(color('  Tip: ', ANSI.YELLOW) +
                 color('↑/↓', ANSI.CYAN) +
                 color(' arrows cycle through command history', ANSI.DIM));
+        writeln(color('       ', ANSI.DIM) +
+                color('Tab', ANSI.CYAN) +
+                color(' auto-completes commands', ANSI.DIM));
         writeln(color('  More commands will be available when the', ANSI.DIM));
         writeln(color('  full Trident T3 engine bundle is loaded.', ANSI.DIM));
         writeln('');
@@ -347,6 +448,10 @@
         writeln('');
         writeln(color('─── FORGE System Status ───', ANSI.CYAN));
         writeln('');
+
+        // FORGE version
+        writeln('  ' + pad_label('Version') +
+               color('v1.0.0', ANSI.BRIGHT_CYAN));
 
         // Engine status
         writeln('  ' + pad_label('Engine')    + color('● ONLINE', ANSI.GREEN));
@@ -369,13 +474,24 @@
                (hasKey ? color('● Configured', ANSI.GREEN)
                        : color('○ Not set', ANSI.YELLOW)));
 
+        // Session statistics
+        var uptimeMs = sessionStartTime > 0
+            ? (Date.now() - sessionStartTime)
+            : 0;
+        writeln('  ' + pad_label('Uptime')    +
+               formatUptime(uptimeMs));
+        writeln('  ' + pad_label('Commands')  +
+               String(commandCount) + ' entered this session');
+        writeln('  ' + pad_label('Last Cmd')  +
+               color(lastCommand, ANSI.WHITE));
+
         // Audio / KVM (placeholders — not available in minimal bundle)
         writeln('  ' + pad_label('Audio')     + color('○ N/A', ANSI.DIM));
         writeln('  ' + pad_label('KVM')       + color('○ N/A', ANSI.DIM));
 
         // Bundle phase
-        writeln('  ' + pad_label('Bundle')    +
-               color('Phase 1 (Minimal)', ANSI.YELLOW));
+        writeln('  ' + pad_label('Phase')     +
+               color('Phase 1: Minimal Terminal Engine', ANSI.YELLOW));
         writeln('');
     };
 
@@ -414,6 +530,343 @@
         writeln('');
     };
 
+    // -------------------------------------------------------------------------
+    // Command: about
+    // -------------------------------------------------------------------------
+
+    commands['about'] = function () {
+        writeln('');
+        writeln(color('═══════════════════════════════════════════', ANSI.CYAN));
+        writeln(color('  About FORGE', ANSI.BRIGHT_CYAN + ANSI.BOLD));
+        writeln(color('═══════════════════════════════════════════', ANSI.CYAN));
+        writeln('');
+        writeln(color('  FORGE', ANSI.BRIGHT_CYAN) +
+                ' is a pocket-sized AI coding terminal for iOS,');
+        writeln('  powered by the ' +
+                color('Trident T3 Audit Engine', ANSI.CYAN) +
+                '. It brings the');
+        writeln('  full opencode agent experience to a touch-first,');
+        writeln('  Metal-accelerated terminal.');
+        writeln('');
+        writeln('  ' + color('Architecture:', ANSI.YELLOW));
+        writeln('    ' + color('•', ANSI.CYAN) + ' SwiftTerm (Metal GPU) for rendering');
+        writeln('    ' + color('•', ANSI.CYAN) + ' WKWebView as the JS execution engine');
+        writeln('    ' + color('•', ANSI.CYAN) + ' Native bridge via window.__forgeNative');
+        writeln('    ' + color('•', ANSI.CYAN) + ' This bundle = the terminal logic layer');
+        writeln('');
+        writeln('  ' + color('Credits:', ANSI.YELLOW));
+        writeln('    ' + color('•', ANSI.CYAN) + ' SwiftTerm by Miguel de Icaza');
+        writeln('    ' + color('•', ANSI.CYAN) + ' opencode runtime');
+        writeln('    ' + color('•', ANSI.CYAN) + ' Trident T3 Audit Engine');
+        writeln('    ' + color('•', ANSI.CYAN) + color('FORGE Engineering', ANSI.WHITE));
+        writeln('');
+    };
+
+    // -------------------------------------------------------------------------
+    // Command: date
+    // -------------------------------------------------------------------------
+
+    commands['date'] = function () {
+        var now = new Date();
+        var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+        var dayName = days[now.getDay()];
+        var monthName = months[now.getMonth()];
+        var date = now.getDate();
+        var year = now.getFullYear();
+
+        var hours = String(now.getHours()).padStart(2, '0');
+        var minutes = String(now.getMinutes()).padStart(2, '0');
+        var seconds = String(now.getSeconds()).padStart(2, '0');
+
+        writeln('');
+        writeln('  ' + color(dayName, ANSI.CYAN) +
+               ' ' + monthName + ' ' + date + ', ' + year);
+        writeln('  ' + color('Time: ', ANSI.DIM) +
+               color(hours + ':' + minutes + ':' + seconds, ANSI.YELLOW));
+        writeln('  ' + color('TZ:   ', ANSI.DIM) +
+               now.getTimezoneOffset() === 0
+                   ? 'UTC'
+                   : 'UTC' + (now.getTimezoneOffset() < 0 ? '+' : '-') +
+                     String(Math.abs(now.getTimezoneOffset() / 60)));
+        writeln('');
+    };
+
+    // -------------------------------------------------------------------------
+    // Command: echo
+    // -------------------------------------------------------------------------
+
+    commands['echo'] = function (args) {
+        if (!args || args.trim().length === 0) {
+            writeln('');
+            return;
+        }
+        // The echo command passes the text through as-is, preserving any
+        // ANSI escape codes the user includes inline.
+        writeln(args);
+    };
+
+    // -------------------------------------------------------------------------
+    // Command: whoami
+    // -------------------------------------------------------------------------
+
+    commands['whoami'] = function () {
+        writeln(color('forge', ANSI.BRIGHT_CYAN));
+    };
+
+    // -------------------------------------------------------------------------
+    // Command: ls
+    // -------------------------------------------------------------------------
+
+    commands['ls'] = function () {
+        try {
+            var result = safeNativeCall('listFiles', {});
+
+            if (result === null) {
+                writeln(color('  Error: ', ANSI.RED) +
+                        color('Native bridge not available.', ANSI.WHITE));
+                writeln(color('  File listing requires the full FORGE engine.',
+                              ANSI.DIM));
+                writeln('');
+                return;
+            }
+
+            // Handle Promise-based async return.
+            if (result && typeof result.then === 'function') {
+                result.then(function (files) {
+                    displayFileList(files);
+                }).catch(function (err) {
+                    writeln(color('  Error: ', ANSI.RED) +
+                            color(String(err || 'Failed to list files'),
+                                  ANSI.WHITE));
+                    writeln('');
+                });
+                return;
+            }
+
+            // Synchronous return.
+            displayFileList(result);
+        } catch (e) {
+            writeln(color('  Error: ', ANSI.RED) +
+                    color('Failed to list files: ' + (e.message || e),
+                          ANSI.WHITE));
+            writeln('');
+        }
+    };
+
+    /**
+     * Renders a file listing. Accepts a string (newline-separated),
+     * an array of strings, or an array of objects with a 'name' property.
+     * @param {*} files The file listing data.
+     */
+    function displayFileList(files) {
+        if (!files || (Array.isArray(files) && files.length === 0) ||
+            (typeof files === 'string' && files.trim().length === 0)) {
+            writeln(color('  (no files)', ANSI.DIM));
+            writeln('');
+            return;
+        }
+
+        writeln('');
+        writeln(color('  ─── Project Files ───', ANSI.CYAN));
+        writeln('');
+
+        var entries;
+        if (typeof files === 'string') {
+            entries = files.split('\n').filter(function (l) {
+                return l.trim().length > 0;
+            });
+        } else if (Array.isArray(files)) {
+            entries = files.map(function (f) {
+                return (typeof f === 'object' && f.name) ? f.name : String(f);
+            });
+        } else {
+            entries = [String(files)];
+        }
+
+        for (var i = 0; i < entries.length; i++) {
+            var name = entries[i];
+            // Color directories green, files cyan, based on trailing slash.
+            if (name.charAt(name.length - 1) === '/') {
+                writeln('  ' + color(name, ANSI.GREEN));
+            } else {
+                writeln('  ' + color(name, ANSI.CYAN));
+            }
+        }
+        writeln('');
+        writeln(color('  ' + entries.length + ' item(s)', ANSI.DIM));
+        writeln('');
+    }
+
+    // -------------------------------------------------------------------------
+    // Command: cat
+    // -------------------------------------------------------------------------
+
+    commands['cat'] = function (args) {
+        if (!args || args.trim().length === 0) {
+            writeln(color('  Usage: ', ANSI.YELLOW) +
+                    color('cat <filename>', ANSI.CYAN));
+            return;
+        }
+
+        var filePath = args.trim();
+
+        try {
+            var result = safeNativeCall('readFile', { path: filePath });
+
+            if (result === null) {
+                writeln(color('  Error: ', ANSI.RED) +
+                        color('Native bridge not available.', ANSI.WHITE));
+                writeln(color('  File reading requires the full FORGE engine.',
+                              ANSI.DIM));
+                writeln('');
+                return;
+            }
+
+            // Handle Promise-based async return.
+            if (result && typeof result.then === 'function') {
+                result.then(function (content) {
+                    displayFileContent(filePath, content);
+                }).catch(function (err) {
+                    writeln(color('  Error: ', ANSI.RED) +
+                            color('Cannot read ' + filePath + ': ' +
+                                  (err || 'file not found'), ANSI.WHITE));
+                    writeln('');
+                });
+                return;
+            }
+
+            // Synchronous return.
+            displayFileContent(filePath, result);
+        } catch (e) {
+            writeln(color('  Error: ', ANSI.RED) +
+                    color('Cannot read ' + filePath + ': ' +
+                          (e.message || e), ANSI.WHITE));
+            writeln('');
+        }
+    };
+
+    /**
+     * Displays file content on the terminal.
+     * @param {string} path  The file path (for header display).
+     * @param {*}      content The file content (string or object with .content).
+     */
+    function displayFileContent(path, content) {
+        var text;
+        if (typeof content === 'string') {
+            text = content;
+        } else if (content && typeof content.content === 'string') {
+            text = content.content;
+        } else if (content && typeof content.data === 'string') {
+            text = content.data;
+        } else {
+            text = String(content || '');
+        }
+
+        writeln('');
+        writeln(color('  ─── ' + path + ' ───', ANSI.CYAN));
+        writeln('');
+
+        // Split into lines and output each with CRLF.
+        var lines = text.split('\n');
+        for (var i = 0; i < lines.length; i++) {
+            writeln(lines[i]);
+        }
+        writeln('');
+        writeln(color('  (' + lines.length + ' lines)', ANSI.DIM));
+        writeln('');
+    }
+
+    // -------------------------------------------------------------------------
+    // Command: theme
+    // -------------------------------------------------------------------------
+
+    commands['theme'] = function () {
+        writeln('');
+        writeln(color('─── FORGE Theme Colors ───', ANSI.CYAN));
+        writeln('');
+
+        var swatches = [
+            ['Red',        ANSI.RED,        '\u2588\u2588'],
+            ['Green',      ANSI.GREEN,      '\u2588\u2588'],
+            ['Yellow',     ANSI.YELLOW,     '\u2588\u2588'],
+            ['Blue',       ANSI.BLUE,       '\u2588\u2588'],
+            ['Magenta',    ANSI.MAGENTA,    '\u2588\u2588'],
+            ['Cyan',       ANSI.CYAN,       '\u2588\u2588'],
+            ['White',      ANSI.WHITE,      '\u2588\u2588'],
+            ['Bright Red',     ANSI.BRIGHT_RED,     '\u2588\u2588'],
+            ['Bright Green',   ANSI.BRIGHT_GREEN,   '\u2588\u2588'],
+            ['Bright Yellow',  ANSI.BRIGHT_YELLOW,  '\u2588\u2588'],
+            ['Bright Blue',    ANSI.BRIGHT_BLUE,    '\u2588\u2588'],
+            ['Bright Cyan',    ANSI.BRIGHT_CYAN,    '\u2588\u2588'],
+            ['Bright White',   ANSI.BRIGHT_WHITE,   '\u2588\u2588']
+        ];
+
+        for (var i = 0; i < swatches.length; i++) {
+            var name = pad(swatches[i][0], 16);
+            var code = swatches[i][1];
+            var block = swatches[i][2];
+            writeln('  ' + color(name, ANSI.DIM) +
+                    color(block, code) + ' ' +
+                    color(block, code) + ' ' +
+                    color(block, code) +
+                    '  ' + color('sample text', code));
+        }
+
+        writeln('');
+        writeln('  ' + color('Bold', ANSI.BOLD) + '   ' +
+                color('Dim', ANSI.DIM) + '   ' +
+                color('Reset', ANSI.RESET));
+        writeln('');
+    };
+
+    // -------------------------------------------------------------------------
+    // Command: matrix (Easter Egg)
+    // -------------------------------------------------------------------------
+
+    commands['matrix'] = function () {
+        writeln('');
+        writeln(color('  Wake up, forge...', ANSI.GREEN));
+        writeln('');
+
+        // Matrix rain characters.
+        var chars = '01ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ012345789Z:."=*+-<>|';
+        var cols = window.__forgeCols || 80;
+        var durationMs = 5000; // 5 seconds
+        var intervalMs = 80;   // ~12.5 fps
+        var elapsed = 0;
+
+        // Pre-generate random "rain" lines for each frame.
+        var timer = setInterval(function () {
+            if (elapsed >= durationMs) {
+                clearInterval(timer);
+                writeln('');
+                writeln(color('  The Matrix has you...', ANSI.GREEN));
+                writeln(color('  Follow the white rabbit. 🐇', ANSI.DIM));
+                writeln('');
+                showPrompt();
+                return;
+            }
+
+            // Build a single line of random green characters.
+            var line = '';
+            for (var c = 0; c < Math.min(cols - 2, 70); c++) {
+                var ch = chars.charAt(
+                    Math.floor(Math.random() * chars.length));
+                // Occasionally brighten a character for depth.
+                if (Math.random() < 0.1) {
+                    line += ANSI.BRIGHT_GREEN + ch + ANSI.GREEN;
+                } else {
+                    line += ch;
+                }
+            }
+            writeln(color(line, ANSI.GREEN));
+            elapsed += intervalMs;
+        }, intervalMs);
+    };
+
     // =========================================================================
     // Section 5: Welcome Banner
     // =========================================================================
@@ -443,7 +896,7 @@
                 ' — ' +
                 color('Trident T3 Audit Engine', ANSI.WHITE));
         writeln(color('  Phase 1: Minimal Terminal Bundle', ANSI.YELLOW));
-        writeln('');
+        writeln(color('  ───────────────────────────────────────────', ANSI.DIM));
 
         // Config status
         var config = window.__forgeConfig || {};
@@ -459,9 +912,7 @@
         }
 
         writeln('');
-        writeln('  ' + color('Type ', ANSI.WHITE) +
-                color('help', ANSI.CYAN) +
-                color(' for available commands.', ANSI.WHITE));
+        writeln(color('  Type \'help\' for available commands.', ANSI.DIM));
         writeln('');
         writeln(color('  Ready.', ANSI.GREEN));
         writeln('');
@@ -539,6 +990,10 @@
                 // Ctrl+U → clear the entire line
                 clearLine();
 
+            } else if (code === 0x09) {
+                // Tab → auto-complete from available commands
+                handleTab();
+
             } else if (code >= 0x20 && code !== 0x7F) {
                 // Printable character (0x20–0x7E, plus any UTF-8 multibyte
                 // which has code >= 0x80) → echo and buffer
@@ -610,6 +1065,9 @@
      *   4. Signals Swift that the engine is ready (__forgeNative.ready()).
      */
     window.__forgeBootstrap = function () {
+        // Record session start time for uptime tracking.
+        sessionStartTime = Date.now();
+
         // Clear any placeholder text that Swift may have fed to SwiftTerm
         // before the bundle loaded (see BuildOnDeviceScreen.feedPlaceholder).
         write(ANSI.CLEAR_SCREEN);
@@ -652,6 +1110,26 @@
      */
     function pad_label(label) {
         return color(pad(label + ':', 12), ANSI.CYAN);
+    }
+
+    /**
+     * Formats a duration in milliseconds as a human-readable uptime string.
+     * Example: 3661000 → "1h 1m 1s"
+     * @param {number} ms The duration in milliseconds.
+     * @returns {string} Formatted uptime string.
+     */
+    function formatUptime(ms) {
+        if (ms <= 0) return '0s';
+        var totalSeconds = Math.floor(ms / 1000);
+        var hours = Math.floor(totalSeconds / 3600);
+        var minutes = Math.floor((totalSeconds % 3600) / 60);
+        var seconds = totalSeconds % 60;
+
+        var parts = [];
+        if (hours > 0) parts.push(hours + 'h');
+        if (minutes > 0) parts.push(minutes + 'm');
+        parts.push(seconds + 's');
+        return parts.join(' ');
     }
 
 })();
