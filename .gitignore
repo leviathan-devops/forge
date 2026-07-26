@@ -49,3 +49,4 @@ fastlane/Preview.html
 fastlane/test_output/
 fastlane/README.md
 # Deliberately DO commit: fastlane/Fastfile, Appfile, Matchfile, deliver/*
+vendor/
