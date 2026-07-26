@@ -126,6 +126,7 @@ struct MissionControlScreen: View {
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.forgeAccent)
             }
+            .accessibilityIdentifier("backButton")
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("MISSION CONTROL")

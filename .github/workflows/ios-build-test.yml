@@ -78,19 +78,39 @@ jobs:
 
       - name: Run UI Tests
         run: |
+          # Run only the FORGEUITests test class so launch tests
+          # (FORGEUITestsLaunchTests) don't slow the suite.
+          # The trailing || true ensures we still collect screenshots
+          # and artifacts even if assertions fail.
           xcodebuild test \
             -project FORGE.xcodeproj \
             -scheme FORGE \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
-            -only-testing:FORGEUITests \
+            -only-testing:FORGEUITests/FORGEUITests \
             -derivedDataPath ./build \
             CODE_SIGNING_ALLOWED=NO \
+            -resultBundlePath ./test-results.xcresult \
             2>&1 | tee ui-test.log || true
-          
-          # Collect screenshots from the simulator
+
+          # Collect screenshots from the simulator (simctl io screenshots)
           mkdir -p ui-screenshots
-          find ~/Library/Developer/CoreSimulator/Devices -name "*.png" -newer build.log -exec cp {} ui-screenshots/ \; 2>/dev/null || true
-          echo "Collected $(ls ui-screenshots/ 2>/dev/null | wc -l) screenshots"
+          find ~/Library/Developer/CoreSimulator/Devices -name "*.png" -newer build.log -exec cp {} ui-screenshots/ 2>/dev/null || true
+          echo "Collected $(ls ui-screenshots/ 2>/dev/null | wc -l) simulator screenshots"
+
+          # Extract XCTAttachment screenshots from the .xcresult bundle.
+          # These are the named attachments (terminal-screen, settings-open,
+          # mission-control, etc.) added via XCTAttachment(lifetime: .keepAlways).
+          mkdir -p ui-attachments
+          if [ -d "./test-results.xcresult" ]; then
+            # xcresulttool can export all attachments in bulk
+            xcrun xcresulttool export attachments \
+              --path ./test-results.xcresult \
+              --output-path ./ui-attachments 2>/dev/null || true
+            # Fallback: dig into the .xcresult bundle for raw attachment files
+            find ./test-results.xcresult -name "*.png" -o -name "*.jpeg" -o -name "*.heic" 2>/dev/null \
+              | while read -r f; do cp "$f" ./ui-attachments/ 2>/dev/null || true; done
+          fi
+          echo "Collected $(ls ui-attachments/ 2>/dev/null | wc -l) xcresult attachments"
 
       - name: Upload Build Log
         if: always()
@@ -114,6 +134,22 @@ jobs:
         with:
           name: ui-test-screenshots
           path: ui-screenshots/
+          if-no-files-found: ignore
+
+      - name: Upload XCResult Attachments
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-attachments
+          path: ui-attachments/
+          if-no-files-found: ignore
+
+      - name: Upload XCResult Bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-xcresult
+          path: test-results.xcresult/
           if-no-files-found: ignore
 
       - name: Upload UI Test Log
