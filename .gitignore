@@ -42,3 +42,10 @@ forge-metafile.json
 *.wasm
 !tree-sitter.wasm
 pyodide/
+
+# Fastlane (auto-generated reports & scratch files — config IS committed)
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output/
+fastlane/README.md
+# Deliberately DO commit: fastlane/Fastfile, Appfile, Matchfile, deliver/*

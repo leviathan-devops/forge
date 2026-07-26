@@ -1,0 +1,9 @@
+FORGE is a developer tool that provides a terminal emulator and AI coding agent on iOS.
+
+MODE 1 (Build on Device): This runs a JavaScript engine in a WKWebView that provides a functional terminal experience. The terminal responds to keyboard input and supports basic commands (help, status, version, clear). No external network calls are required. To test: launch the app, tap "Build on Device", and type into the terminal.
+
+MODE 2 (Mission Control): This connects to user-configured servers. Since no servers are configured by default, the app will show a "No Servers Configured" screen with an "Add Server" button. This is expected behavior — the user must configure their own server.
+
+No demo credentials are needed — the app is fully functional without any login or account.
+
+For questions: support@forge-terminal.app

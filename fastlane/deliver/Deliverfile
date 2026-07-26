@@ -1,0 +1,37 @@
+# frozen_string_literal: true
+#
+# fastlane/deliver/Deliverfile — App Store Connect metadata & upload config
+#
+# This file configures `deliver` (the App Store upload tool). It is invoked by
+# the `release` lane in the Fastfile. The same settings are also passed
+# explicitly in the Fastfile so the lane works whether or not this file is
+# auto-loaded.
+#
+# Run `fastlane deliver download_metadata` to pull live metadata from App
+# Store Connect into fastlane/deliver/metadata/ and edit locally.
+#
+
+# App identity
+app_identifier("com.forge.app")
+username(ENV["APPLE_ID"] || "PLACEHOLDER_APPLE_ID@example.com")
+
+# Where deliver reads metadata + screenshots.
+metadata_path("metadata")
+screenshots_path("screenshots")
+
+# Skip the interactive HTML verification report (required for CI).
+force(true)
+
+# Do NOT auto-submit for review — that is a manual, deliberate decision.
+submit_for_review(false)
+automatic_release(false)
+
+# FORGE has no in-app purchases, so skip that precheck.
+precheck_include_in_app_purchases(false)
+
+# Price tier (0 = free). Change once, then it persists in App Store Connect.
+price_tier(0)
+
+# Primary & secondary App Store categories.
+primary_category("MZGenre.DeveloperTools")
+secondary_category("MZGenre.Productivity")

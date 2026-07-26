@@ -1,0 +1,10 @@
+Welcome to FORGE — the AI coding agent and terminal for iOS.
+
+NEW IN 1.0.0:
+• Full on-device AI coding agent (Mode 1: Build on Device)
+• Mission Control for remote session management (Mode 2)
+• Metal-accelerated terminal with 5000-line scrollback
+• Command history with arrow-key navigation
+• Eagle Vision grid overview for multi-session monitoring
+• ANSI 256-color support with custom dark theme
+• Zero tracking, zero analytics, zero ads

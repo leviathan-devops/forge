@@ -1,0 +1,54 @@
+FORGE is a professional AI coding agent and terminal for iOS — the entire opencode + Trident T3 Audit Engine experience, reimagined for touch.
+
+BUILD ON DEVICE
+
+Mode 1 runs a full coding agent directly on your iPhone or iPad. A Metal-accelerated terminal renders at 120 FPS with 5000-line scrollback. The AI agent understands your project, writes code, runs audits, and reports findings — all inside a local JavaScript engine running in a sandboxed WKWebView. No cloud round-trips. No data leaving your device.
+
+The terminal supports ANSI colors, JetBrains Mono typography, command history with arrow-key navigation, and the complete opencode bridge contract. You get the same prompt, the same workflows, and the same agent intelligence as the desktop experience.
+
+MISSION CONTROL
+
+Mode 2 connects to opencode servers on your local network or remote machines. See every active session in a horizontally swipeable pager. Pinch to enter Eagle Vision — a live grid overview of all sessions simultaneously. Monitor builds, review audit scores, and keep track of multiple agents working in parallel.
+
+Mission Control automatically discovers servers via Bonjour/mDNS, reconnects on network changes, and shows real-time connection status. Add unlimited servers and switch between them instantly.
+
+PROFESSIONAL TERMINAL
+
+• SwiftTerm rendering with Metal GPU acceleration
+• ANSI 256-color support with custom FORGE dark theme
+• JetBrains Mono font with optimal line height and character spacing
+• 5000-line scrollback buffer
+• Command history with up/down arrow navigation
+• Smart keyboard with Done button accessory bar
+• Copy/paste support via clipboard integration
+• Link detection — tap URLs to open in Safari
+• Haptic feedback on terminal bell events
+
+AI CODING AGENT
+
+• Full opencode runtime embedded on-device
+• Trident T3 Audit Engine with 18-layer code review
+• Local LLM inference (no API calls required for core features)
+• Optional API key configuration for cloud-based models
+• Provider support: Anthropic, OpenAI, and local models
+• Real-time streaming output rendered to the terminal
+
+DESIGN
+
+FORGE is designed with obsessive attention to detail. The interface uses a custom dark color system optimized for OLED displays — true blacks, vibrant cyan accents, and carefully tuned contrast ratios. Every interaction includes haptic feedback. Animations use spring physics with natural damping curves. The parallax grid background responds to device motion via the gyroscope.
+
+The launch menu features animated transitions — the FORGE title fades in while mode cards slide up with spring physics. Every pixel is intentional.
+
+PRIVACY
+
+FORGE respects your privacy. The on-device engine never sends your code to any server. API keys are stored securely in the iOS Keychain, never in plain text. Network connections in Mission Control are encrypted with TLS. There is no analytics, no tracking, and no advertising. What happens on your device stays on your device.
+
+WHO IS FORGE FOR?
+
+• iOS developers who want a powerful terminal on their phone
+• Backend engineers who need to monitor remote build servers
+• DevOps teams running multiple agent sessions in parallel
+• Security researchers who need on-device code analysis
+• Anyone who believes the iPhone is a serious development platform
+
+FORGE is free with no in-app purchases, no subscriptions, and no ads. It is built by developers, for developers.

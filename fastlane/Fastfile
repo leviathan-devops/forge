@@ -1,0 +1,165 @@
+# frozen_string_literal: true
+#
+# fastlane/Fastfile — FORGE iOS build, sign, and distribution pipeline
+#
+# Lanes:
+#   fastlane beta      — Build + sign + upload to TestFlight
+#   fastlane release   — Build + sign + upload to App Store (metadata + binary)
+#   fastlane certs     — Generate & store signing certificates in the match repo
+#
+# ---------------------------------------------------------------------------
+# Prerequisites
+# ---------------------------------------------------------------------------
+#   * XcodeGen        — `brew install xcodegen`   (regenerates FORGE.xcodeproj)
+#   * fastlane        — `gem install fastlane` or via Bundler
+#   * Apple Developer account with App Store Connect access
+#   * A private git repo for fastlane match certificates
+#       (see Matchfile + docs/testflight-setup.md)
+#
+# ---------------------------------------------------------------------------
+# Required secrets (set as env vars or GitHub Actions secrets)
+# ---------------------------------------------------------------------------
+#   APPLE_ID            Apple ID email address
+#   FASTLANE_PASSWORD   App-specific password (create at appleid.apple.com)
+#   TEAM_ID             Apple Developer Team ID (10-char alphanumeric)
+#   MATCH_GIT_URL       Private git repo storing signing certificates
+#   MATCH_PASSWORD      Encryption passphrase for the match repo
+# ---------------------------------------------------------------------------
+
+default_platform(:ios)
+
+min_fastlane_version("2.220.0")
+
+# App-wide constants
+APP_IDENTIFIER = "com.forge.app"
+SCHEME         = "FORGE"
+PROJECT        = "FORGE.xcodeproj"
+
+# ---------------------------------------------------------------------------
+# Helper lanes (private — not callable from the CLI, only from other lanes)
+# ---------------------------------------------------------------------------
+
+# The repo uses XcodeGen (project.yml) and does NOT commit FORGE.xcodeproj,
+# so we regenerate it before every build/sign/upload.
+private_lane :ensure_project do
+  repo_root = File.expand_path("..", __dir__) # parent of fastlane/
+  unless File.directory?(File.join(repo_root, PROJECT))
+    UI.message(" '#{PROJECT}' not found — generating with xcodegen…")
+    sh("cd '#{repo_root}' && xcodegen generate 2>&1")
+  end
+end
+
+# Compute a monotonically increasing build number so every TestFlight upload
+# is unique. Uses the git commit count (works locally and in CI with full
+# history); falls back to a timestamp if git history is unavailable.
+private_lane :next_build_number do
+  count = sh("git rev-list --count HEAD 2>/dev/null").strip.to_i
+  count.positive? ? count : Time.now.utc.strftime("%Y%m%d%H%M").to_i
+end
+
+# Shared code-signing + build block. Both the beta and release lanes build the
+# exact same signed IPA; only the upload target differs.
+private_lane :sign_and_build do |options|
+  ensure_project
+
+  new_build = next_build_number
+  UI.important("Setting build number to #{new_build}")
+
+  # 1. Code signing via fastlane match.
+  #    Pulls the distribution certificate + provisioning profile from the
+  #    encrypted match git repo and installs them in the keychain.
+  #    `readonly: is_ci` prevents CI from mutating certificates.
+  match(
+    type: "appstore",
+    readonly: is_ci,
+    app_identifier: APP_IDENTIFIER,
+    git_url: ENV["MATCH_GIT_URL"],
+    username: ENV["APPLE_ID"]
+  )
+
+  # 2. Build the signed IPA for App Store distribution.
+  #    `xcargs` overrides the project.yml dev defaults (signing disabled,
+  #    empty team) so the production build is fully signed.
+  gym(
+    scheme: SCHEME,
+    project: PROJECT,
+    clean: true,
+    export_method: "app-store",
+    include_bitcode: false,
+    include_symbols: true,
+    build_number: new_build,
+    xcargs: {
+      "DEVELOPMENT_TEAM" => ENV.fetch("TEAM_ID", ""),
+      "CODE_SIGNING_REQUIRED" => "YES",
+      "CODE_SIGNING_ALLOWED" => "YES",
+      "CODE_SIGN_STYLE" => "manual"
+    }
+  )
+end
+
+# ---------------------------------------------------------------------------
+# Lanes
+# ---------------------------------------------------------------------------
+
+platform :ios do
+  # ── TestFlight (beta) ───────────────────────────────────────────────
+  desc "Build, sign, and upload a new build to TestFlight"
+  lane :beta do
+    sign_and_build
+
+    ipa_path = Actions.lane_context[SharedValues::IPA_OUTPUT_PATH]
+    UI.user_error!("gym did not produce an IPA — aborting TestFlight upload") unless ipa_path
+
+    # 3. Upload the IPA to TestFlight via pilot.
+    pilot(
+      ipa: ipa_path,
+      username: ENV["APPLE_ID"],
+      skip_waiting_for_build_processing: false,
+      notify_external_testers: false,
+      distribute_only: false
+    )
+
+    UI.success("✅ Build #{File.basename(ipa_path)} uploaded to TestFlight!")
+  end
+
+  # ── App Store (release) ─────────────────────────────────────────────
+  desc "Build, sign, and upload binary + metadata to App Store Connect"
+  lane :release do
+    sign_and_build
+
+    ipa_path = Actions.lane_context[SharedValues::IPA_OUTPUT_PATH]
+    UI.user_error!("gym did not produce an IPA — aborting App Store upload") unless ipa_path
+
+    # 3. Upload metadata, screenshots, and binary to App Store Connect.
+    #    Metadata/screenshots live in fastlane/deliver/.
+    deliver(
+      ipa: ipa_path,
+      username: ENV["APPLE_ID"],
+      metadata_path: "fastlane/deliver/metadata",
+      screenshots_path: "fastlane/deliver/screenshots",
+      force: true, # skip the interactive HTML preview
+      submit_for_review: false, # review submission is a manual decision
+      automatic_release: false,
+      precheck_include_in_app_purchases: false,
+      ignore_language_directory_utilization: true
+    )
+
+    UI.success("✅ FORGE #{ipa_path} + metadata uploaded to App Store Connect!")
+  end
+
+  # ── Bootstrap signing (run once locally) ────────────────────────────
+  desc "Generate and store code signing certificates in the match repo"
+  lane :certs do
+    ensure_project
+
+    match(
+      type: "appstore",
+      readonly: false, # allow creating new certs
+      app_identifier: APP_IDENTIFIER,
+      git_url: ENV["MATCH_GIT_URL"],
+      username: ENV["APPLE_ID"]
+    )
+
+    UI.success("✅ Certificates generated and stored in the match repo!")
+  end
+end

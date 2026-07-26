@@ -1,0 +1,106 @@
+# .github/workflows/testflight-upload.yml
+#
+# Builds, signs, and uploads FORGE to TestFlight on every version tag (v*).
+#
+# ---------------------------------------------------------------------------
+# REQUIRED GITHUB REPOSITORY SECRETS
+# ---------------------------------------------------------------------------
+# Set these under:  Settings → Secrets and variables → Actions → New secret
+#
+#   APPLE_ID            Apple ID email that owns the developer membership
+#   FASTLANE_PASSWORD   App-specific password (create at appleid.apple.com
+#                       under Sign-In and Security → App-Specific Passwords)
+#   TEAM_ID             Apple Developer Team ID (10-char alphanumeric)
+#   MATCH_GIT_URL       Private git repo storing encrypted signing certs
+#   MATCH_PASSWORD      Encryption passphrase used when running `fastlane match`
+#
+# Optional (only needed for the release lane, not TestFlight):
+#   MATCH_GIT_BASIC_AUTH — "user:token" for the match repo if private
+# ---------------------------------------------------------------------------
+#
+# Triggering: create and push a tag, e.g.:
+#   git tag v1.0.0-beta.1
+#   git push origin v1.0.0-beta.1
+
+name: FORGE TestFlight Upload
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch: # manual trigger from the Actions tab
+
+# Prevent overlapping uploads racing for the same build number.
+concurrency:
+  group: testflight-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  testflight:
+    name: Build, Sign & Upload to TestFlight
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout (full history for build numbering)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # needed for git rev-list --count in the Fastfile
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)"
+          xcodebuild -version
+          swift --version
+
+      - name: Install tooling (xcodegen + fastlane)
+        run: |
+          brew install xcodegen
+          # fastlane ships with the GitHub Actions macOS image; ensure it's current.
+          brew install fastlane || gem install fastlane --no-document
+          fastlane --version
+
+      - name: Generate Xcode Project
+        run: |
+          xcodegen generate 2>&1
+          test -d FORGE.xcodeproj && echo "project generated" || { echo "xcodegen failed"; exit 1; }
+
+      - name: Configure match credentials
+        env:
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+        run: |
+          if [ -z "$MATCH_PASSWORD" ] || [ -z "$MATCH_GIT_URL" ]; then
+            echo "::error::MATCH_PASSWORD and MATCH_GIT_URL secrets are required."
+            echo "::error::Set them under Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
+      - name: Build, Sign & Upload to TestFlight
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          FASTLANE_PASSWORD: ${{ secrets.FASTLANE_PASSWORD }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          # Speed up keychain operations on CI.
+          MATCH_KEYCHAIN_NAME: "fastlane_ci_keychain"
+          MATCH_KEYCHAIN_PASSWORD: ""
+        run: |
+          if [ -z "$APPLE_ID" ] || [ -z "$FASTLANE_PASSWORD" ] || [ -z "$TEAM_ID" ]; then
+            echo "::error::APPLE_ID, FASTLANE_PASSWORD, and TEAM_ID secrets are required."
+            exit 1
+          fi
+          fastlane beta
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fastlane-logs
+          path: |
+            fastlane/report.xml
+            fastlane/Preview.html
+            *.ipa
+            *.dSYM.zip
+          if-no-files-found: ignore

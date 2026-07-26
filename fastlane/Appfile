@@ -1,0 +1,23 @@
+# frozen_string_literal: true
+#
+# fastlane/Appfile — App & account identity for fastlane
+#
+# Replace the PLACEHOLDER values below once you have an Apple Developer
+# account. See docs/testflight-setup.md for how to obtain each value.
+#
+
+app_identifier("com.forge.app")
+
+# Your Apple ID email address (the account that owns the developer membership).
+apple_id("PLACEHOLDER_APPLE_ID@example.com")
+
+# Apple Developer Program Team ID.
+#   Find it at: https://developer.apple.com/account  → Membership → Team ID
+#   (a 10-character alphanumeric string, e.g. "A1B2C3D4E5")
+team_id("PLACEHOLDER_TEAM_ID")
+
+# App Store Connect Team ID (only needed if your account belongs to multiple
+# App Store Connect teams). Look it up via:
+#   fastlane deliver --team_name "Your Team Name"
+# or in App Store Connect → Users and Access → your team.
+itc_team_id("PLACEHOLDER_ITC_TEAM_ID")

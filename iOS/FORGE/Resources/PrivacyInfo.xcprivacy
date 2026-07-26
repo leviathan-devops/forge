@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+		FORGE Privacy Manifest (PrivacyInfo.xcprivacy)
+
+		FORGE does not collect any user data, does not engage in tracking,
+		and does not use any privacy-sensitive "Required Reason" APIs.
+		All three collections below are intentionally empty.
+
+		Apple requires this file for all apps submitted from Spring 2024.
+		Reference: https://developer.apple.com/documentation/bundleresources/privacy_manifest_files
+	-->
+
+	<!-- FORGE does not track users or share data with third parties for tracking. -->
+	<key>NSPrivacyTracking</key>
+	<false/>
+
+	<!-- No tracking domains are used. -->
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+
+	<!-- FORGE does not collect any data types from users.
+	     (No analytics, no advertising, no telemetry.) -->
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+
+	<!-- FORGE does not use any of the privacy-sensitive "Required Reason" APIs
+	     (e.g. FileTimestamp, SystemBootTime, DiskSpace, UserDefaults, etc.).
+	     If a future dependency triggers one, add a matching NSPrivacyAccessedAPIType
+	     entry with the applicable NSPrivacyAccessedAPITypeReasons code. -->
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array/>
+</dict>
+</plist>

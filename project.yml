@@ -43,6 +43,7 @@ targets:
       - path: iOS/FORGE/Resources/forge-bundle.js
       - path: iOS/FORGE/Resources/forge-identity.md
       - path: iOS/FORGE/Resources/AppIcon.svg
+      - path: iOS/FORGE/Resources/PrivacyInfo.xcprivacy
     dependencies:
       - package: SwiftTerm
         product: SwiftTerm

@@ -1,0 +1,26 @@
+# frozen_string_literal: true
+#
+# fastlane/Matchfile — Code signing certificate storage config
+#
+# fastlane match stores your distribution certificate + provisioning profile
+# in an ENCRYPTED private git repo so every machine / CI runner can share the
+# same signing identity. See docs/testflight-setup.md for setup.
+#
+# IMPORTANT: replace git_url with your own PRIVATE repository.
+#
+
+git_url("PLACEHOLDER_MATCH_GIT_URL")
+
+# Storage backend for the encrypted certs.
+#   "git"      — encrypted files committed to the repo above (default, simplest)
+#   "google_cloud" / "s3" — alternative backends (see fastlane match docs)
+storage_mode("git")
+
+# Default certificate type. Lanes override this (beta/release use "appstore").
+type("appstore")
+
+# App(s) covered by these certificates.
+app_identifier(["com.forge.app"])
+
+# Uncomment to pin fastlane to a specific Xcode path (useful on CI):
+# xcode_version("15.4")
