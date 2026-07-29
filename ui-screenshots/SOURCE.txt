@@ -1,0 +1,21 @@
+Gate D CI artifact pull 20260729T065115Z
+repo=leviathan-devops/forge
+run_id=30220688277
+overall=partial D1=pass D2=fail D3=pass D4=fail
+files={
+  "D1": {
+    "src": "/home/leviathan/Grok_Build/projects/forge/tmp/ci_artifacts_gate_d_pull_1936349/ui-test-attachments/D499BD08-D5BC-4155-B55B-F7A073F084D7.png",
+    "origin": "uitest:01_LaunchMenu_0_ADCC9A25-1627-4A32-AEC4-A58B45F0DB4C.png",
+    "sha256": "32c039ac45565404add177e631f66453fdaeb60b0f350744f16ea4280c4ec09b",
+    "bytes": 472969
+  },
+  "D3": {
+    "src": "/home/leviathan/Grok_Build/projects/forge/tmp/ci_artifacts_gate_d_pull_1936349/ui-test-attachments/264DD41A-DADF-42A5-82DD-8C35D98D2005.png",
+    "origin": "uitest:mission-control_0_0559B547-D7C8-4F12-BB99-A3BAD078251F.png",
+    "sha256": "31b3a8b560a494c746eaf04ef60e0daa4013b5042026d2f23676a0c6969133ab",
+    "bytes": 114942
+  },
+  "D2": {
+    "note": "app-store_launch_lookalike"
+  }
+}

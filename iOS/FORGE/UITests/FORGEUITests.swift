@@ -25,6 +25,14 @@ final class FORGEUITests: XCTestCase {
         // Stop on first failure so we get clean, focused test reports
         continueAfterFailure = false
         app = XCUIApplication()
+        // Gate D: optional on-disk screenshot directory for simctl/capture scripts.
+        // vm-gate-d-screenshots.sh sets this env on the UI test process; we also
+        // forward a marker into the app so crash logs can be correlated.
+        if let shotDir = ProcessInfo.processInfo.environment["FORGE_SCREENSHOT_DIR"],
+           !shotDir.isEmpty {
+            app.launchEnvironment["FORGE_SCREENSHOT_DIR"] = shotDir
+        }
+        app.launchEnvironment["FORGE_GATE_D"] = "1"
         app.launch()
     }
 
@@ -47,6 +55,33 @@ final class FORGEUITests: XCTestCase {
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
+
+        // Also write PNG to FORGE_SCREENSHOT_DIR when set (Gate D artifact pull).
+        // Filenames keep the test name so capture-screenshots.sh can match
+        // terminal / mission / launch patterns via copy_attachment.
+        guard let dir = ProcessInfo.processInfo.environment["FORGE_SCREENSHOT_DIR"],
+              !dir.isEmpty else {
+            return
+        }
+        let fm = FileManager.default
+        var isDir: ObjCBool = false
+        if !fm.fileExists(atPath: dir, isDirectory: &isDir) {
+            try? fm.createDirectory(
+                atPath: dir,
+                withIntermediateDirectories: true,
+                attributes: nil
+            )
+        }
+        let safe = name
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: " ", with: "_")
+        let path = (dir as NSString).appendingPathComponent("\(safe).png")
+        do {
+            try screenshot.pngRepresentation.write(to: URL(fileURLWithPath: path))
+        } catch {
+            // Non-fatal: attachment in xcresult remains the source of truth.
+            print("FORGEUITests: failed to write screenshot \(path): \(error)")
+        }
     }
 
     // MARK: - Full Navigation Flow
@@ -460,5 +495,89 @@ final class FORGEUITests: XCTestCase {
             forgeTitle.waitForExistence(timeout: 10),
             "Should return to launch menu"
         )
+    }
+
+    // MARK: - Gate D smoke path (D1–D4)
+
+    /// Single end-to-end path used by `scripts/vm-gate-d-screenshots.sh`:
+    /// launch menu (D1) → Mode1 terminal (D2) → Mode2 Mission Control (D3).
+    /// Absence of process crash / XCT fail is D4 evidence on the smoke path.
+    func testGateDSmokeScreenshots() throws {
+        // D1 — dual-mode launch menu
+        let forgeTitle = app.staticTexts["FORGE"]
+        XCTAssertTrue(
+            forgeTitle.waitForExistence(timeout: 15),
+            "D1: FORGE title should be visible on the launch menu"
+        )
+        XCTAssertTrue(
+            app.buttons["BUILD ON-DEVICE"].waitForExistence(timeout: 10),
+            "D1: BUILD ON-DEVICE card must be present"
+        )
+        XCTAssertTrue(
+            app.buttons["MISSION CONTROL"].exists,
+            "D1: MISSION CONTROL card must be present"
+        )
+        takeScreenshot(named: "01_LaunchMenu")
+        takeScreenshot(named: "D1_launch_menu")
+
+        // D2 — Mode 1 terminal (SwiftTerm path)
+        let buildCard = app.buttons["BUILD ON-DEVICE"]
+        buildCard.tap()
+        sleep(5)
+        takeScreenshot(named: "02_BuildOnDevice")
+        takeScreenshot(named: "terminal-screen")
+        takeScreenshot(named: "D2_mode1_terminal")
+
+        let terminalScrollView = app.scrollViews.firstMatch
+        XCTAssertTrue(
+            terminalScrollView.waitForExistence(timeout: 10),
+            "D2: terminal scroll view (SwiftTerm) should exist after BUILD ON-DEVICE"
+        )
+
+        let backButton = app.buttons["backButton"]
+        XCTAssertTrue(
+            backButton.waitForExistence(timeout: 10),
+            "D2: back button should be visible in BUILD ON-DEVICE"
+        )
+        backButton.tap()
+        sleep(3)
+        XCTAssertTrue(
+            forgeTitle.waitForExistence(timeout: 10),
+            "D2: return to launch menu after Mode1"
+        )
+
+        // D3 — Mode 2 Mission Control (empty fleet OK)
+        let missionCard = app.buttons["MISSION CONTROL"]
+        XCTAssertTrue(
+            missionCard.waitForExistence(timeout: 10),
+            "D3: MISSION CONTROL card should be visible"
+        )
+        missionCard.tap()
+        sleep(4)
+        takeScreenshot(named: "03_MissionControl")
+        takeScreenshot(named: "mission-control")
+        takeScreenshot(named: "D3_mission_control")
+
+        let addServerButton = app.buttons["Add Server"]
+        let noServersText = app.staticTexts["No Servers Configured"]
+        let emptyOrNav = addServerButton.waitForExistence(timeout: 10)
+            || noServersText.exists
+            || app.buttons["backButton"].exists
+        XCTAssertTrue(
+            emptyOrNav,
+            "D3: Mission Control should show empty state or navigable chrome"
+        )
+
+        XCTAssertTrue(
+            app.buttons["backButton"].waitForExistence(timeout: 10),
+            "D3: back button should be visible in Mission Control"
+        )
+        app.buttons["backButton"].tap()
+        sleep(2)
+        XCTAssertTrue(
+            forgeTitle.waitForExistence(timeout: 10),
+            "D4 smoke: return to launch menu without crash"
+        )
+        takeScreenshot(named: "D4_smoke_final")
     }
 }

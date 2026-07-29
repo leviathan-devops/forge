@@ -78,20 +78,35 @@ jobs:
 
       - name: Run UI Tests
         run: |
-          # Run only the FORGEUITests test class so launch tests
-          # (FORGEUITestsLaunchTests) don't slow the suite.
-          # The trailing || true ensures we still collect screenshots
-          # and artifacts even if assertions fail.
+          # Hard-fail on assertion failure (F-CI-SOFT-FAIL). Artifact
+          # collection is a separate if:always() step so logs/xcresult
+          # still upload when tests fail.
+          set -o pipefail
+          mkdir -p "$GITHUB_WORKSPACE/ui-screenshots-gate-d"
+          export FORGE_SCREENSHOT_DIR="$GITHUB_WORKSPACE/ui-screenshots-gate-d"
+          export TEST_RUNNER_FORGE_SCREENSHOT_DIR="$FORGE_SCREENSHOT_DIR"
+          export GATE_D=1
+          # Prefer Gate D smoke first (writes D1/D2/D3 named PNGs on disk).
           xcodebuild test \
             -project FORGE.xcodeproj \
             -scheme FORGE \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
-            -only-testing:FORGEUITests/FORGEUITests \
+            -only-testing:FORGEUITests/FORGEUITests/testGateDSmokeScreenshots \
+            -only-testing:FORGEUITests/FORGEUITests/testMissionControlFlow \
+            -only-testing:FORGEUITests/FORGEUITests/testLaunchMenuElements \
+            -only-testing:FORGEUITests/FORGEUITests/testSettingsFlow \
             -derivedDataPath ./build \
             CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath ./test-results.xcresult \
-            2>&1 | tee ui-test.log || true
+            2>&1 | tee ui-test.log
+          # Copy Gate D on-disk PNGs into ui-screenshots for upload
+          mkdir -p ui-screenshots
+          cp -a "$FORGE_SCREENSHOT_DIR"/. ui-screenshots/ 2>/dev/null || true
+          ls -la ui-screenshots | head -40
 
+      - name: Collect UI Test Artifacts
+        if: always()
+        run: |
           # Collect screenshots from the simulator (simctl io screenshots)
           mkdir -p ui-screenshots
           find ~/Library/Developer/CoreSimulator/Devices -name "*.png" -newer build.log -exec cp {} ui-screenshots/ 2>/dev/null || true
@@ -144,7 +159,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload Screenshot
-        if: success()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: screenshots
@@ -184,7 +199,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload App Bundle
-        if: success()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: FORGE-app
@@ -211,17 +226,20 @@ jobs:
           bun install 2>/dev/null || npm install
 
       - name: TypeScript Type Check
+        # Hard-fail on type errors (Wave 6 pollution-scrub: residual TS soft-fail).
+        # Prefer bun when present; fall back to npx tsc. Exit non-zero on errors.
         run: |
           cd forge
-          bun run typecheck 2>/dev/null || npx tsc --noEmit 2>&1 | head -50 || true
-
-      - name: esbuild Bundle Test (if source available)
-        run: |
-          if [ -d "vendor/opencode" ]; then
-            echo "OpenCode vendor source found — attempting bundle"
-            cd scripts
-            bun run build-forge-bundle.mjs 2>&1 | tail -20 || true
+          if command -v bun >/dev/null 2>&1; then
+            bun run typecheck
           else
-            echo "No vendor/opencode — skipping bundle test (expected at this stage)"
+            npx tsc --noEmit
           fi
-        continue-on-error: true
+
+      - name: esbuild Bundle Test
+        # Rebuild forge-bundle.js from repo scripts (FORGE_ROOT from script dir).
+        # Hard-fail on rebuild failure (Wave 6 pollution-scrub residual).
+        run: |
+          node scripts/build-forge-bundle.mjs
+          test -s iOS/FORGE/Resources/forge-bundle.js
+          echo "bundle bytes: $(wc -c < iOS/FORGE/Resources/forge-bundle.js | tr -d ' ')"

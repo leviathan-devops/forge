@@ -44,6 +44,9 @@ targets:
       - path: iOS/FORGE/Resources/forge-identity.md
       - path: iOS/FORGE/Resources/AppIcon.svg
       - path: iOS/FORGE/Resources/PrivacyInfo.xcprivacy
+      - path: iOS/FORGE/Resources/Fonts/JetBrainsMono-Regular.ttf
+      - path: iOS/FORGE/Resources/Fonts/JetBrainsMono-Bold.ttf
+      - path: iOS/FORGE/Resources/Fonts/JetBrainsMono-SemiBold.ttf
     dependencies:
       - package: SwiftTerm
         product: SwiftTerm

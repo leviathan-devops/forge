@@ -43,7 +43,12 @@ struct ForgeTerminalView: UIViewRepresentable {
         view.selectedTextBackgroundColor = ForgeTheme.selectionColor
         view.installColors(ForgeTheme.ansiColors)
 
-        // Metal GPU rendering for smooth scrolling; fall back gracefully.
+        // Metal GPU rendering for smooth scrolling.
+        // CRITICAL: never enable Metal on the iOS Simulator — SwiftTerm's Metal
+        // path SIGABRTs under XCUITest (CI Gate D Mode1 crash:
+        // "com.forge.app crashed in <external symbol>" right after tapping
+        // BUILD ON-DEVICE). Device builds still get Metal when available.
+        #if !targetEnvironment(simulator)
         do {
             try view.setUseMetal(true)
         } catch {
@@ -51,6 +56,7 @@ struct ForgeTerminalView: UIViewRepresentable {
             print("Metal unavailable, using CoreText fallback: \(error)")
             #endif
         }
+        #endif
 
         // Generous scrollback but capped to control memory (§31.1).
         view.changeScrollback(5000)

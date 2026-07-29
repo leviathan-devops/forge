@@ -234,11 +234,13 @@ final class SessionHostController: UIViewController, TerminalViewDelegate {
         terminalView.nativeForegroundColor = ForgeTheme.foregroundColor
         terminalView.selectedTextBackgroundColor = ForgeTheme.selectionColor
         terminalView.installColors(ForgeTheme.ansiColors)
+        #if !targetEnvironment(simulator)
         do { try terminalView.setUseMetal(true) } catch {
             #if DEBUG
             print("Metal unavailable: \(error)")
             #endif
         }
+        #endif
         terminalView.changeScrollback(5000)
         terminalView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         view.addSubview(terminalView)
