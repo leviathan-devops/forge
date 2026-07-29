@@ -145,6 +145,23 @@ for pth in app_store.rglob("*.png"):
 if "D1" not in mapped and "D1" in app_map:
     mapped["D1"] = app_map["D1"]; mapped_src["D1"] = "app-store"
 
+def is_springboard_or_non_forge(p: Path) -> bool:
+    """Reject iOS Springboard / non-FORGE dark UI as Mode1 evidence."""
+    try:
+        from PIL import Image
+        import numpy as np
+        arr = np.asarray(Image.open(p).convert("RGB").resize((64, 128)), dtype=float)
+        mean = float(arr.mean())
+        # FORGE screens are dark (mean typically 15-35). Springboard ~65-75.
+        if mean > 45.0:
+            return True
+        # Very large PNG with high entropy often home screen photos
+        if p.stat().st_size > 1_500_000 and mean > 40.0:
+            return True
+        return False
+    except Exception:
+        return False
+
 def lookalike(a: Path, b: Path, mse_thresh: float = 80.0) -> bool:
     """True if images are visually near-identical (launch-fallback trap)."""
     try:
@@ -192,7 +209,16 @@ if "D3" in mapped:
 
 if "D2" in mapped:
     d2 = mapped["D2"]
-    if "D1" in mapped and (sha(d2) == sha(mapped["D1"]) or lookalike(d2, mapped["D1"])):
+    if is_springboard_or_non_forge(d2):
+        results["D2"] = "fail"
+        files["D2"] = {
+            "src": str(d2),
+            "origin": mapped_src.get("D2"),
+            "sha256": sha(d2),
+            "bytes": d2.stat().st_size,
+            "note": "rejected_springboard_or_non_forge_ui",
+        }
+    elif "D1" in mapped and (sha(d2) == sha(mapped["D1"]) or lookalike(d2, mapped["D1"])):
         results["D2"] = "partial"
         files["D2"] = {
             "src": str(d2),

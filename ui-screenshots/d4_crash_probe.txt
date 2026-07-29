@@ -1,0 +1,22 @@
+=== Gate D4 no-crash smoke log ===
+stamp=20260729T070300Z
+label=d4-crash-smoke
+D4_status=blocked
+ssh=user@127.0.0.1:50922
+guest_dir=/Users/user/FORGE
+host_shots=/home/leviathan/Grok_Build/projects/forge/ui-screenshots
+---
+detail: SSH blocked; CI recovery overall=partial D1=pass D2=blocked D3=pass D4=blocked (no guest simctl).
+---
+evidence_rules:
+  D4=pass requires: green testGateDSmokeScreenshots OR capture d4_crash_probe without EXC_BAD_ACCESS/Fatal error/SIGABRT/SIGSEGV
+  D4=fail means crash keywords or UITest hard fail on smoke path
+  D4=blocked means sim/SSH unavailable — no runtime claim
+---
+host_d4_crash_probe=ABSENT (no runtime simctl probe; only host harness static)
+runtime_uitest_log=ABSENT_OR_NOT_PULLED
+---
+host_harness_static:
+  UITests.testGateDSmokeScreenshots=present
+  capture-screenshots.d4_crash_probe=present
+=== end D4 smoke log ===
