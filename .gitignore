@@ -1,0 +1,56 @@
+# Xcode
+build/
+DerivedData/
+*.xcodeproj/
+*.xcworkspace/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+xcuserdata/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Node/Bun
+node_modules/
+dist/
+
+# Docker-OSX
+docker-osx-storage/
+
+# Secrets
+*.p12
+*.cer
+*.mobileprovision
+.env
+
+# macOS
+.DS_Store
+
+# Generated screenshots (App Store captures from CI)
+screenshots/
+
+# Forge build artifacts
+forge-metafile.json
+*.wasm
+!tree-sitter.wasm
+pyodide/
+# WAVE 1b: vendored Pyodide UMD (js + wasm) ships in the app bundle
+!iOS/FORGE/Resources/pyodide/
+!iOS/FORGE/Resources/pyodide/**
+!iOS/FORGE/Resources/pyodide/**/*.wasm
+
+# Fastlane (auto-generated reports & scratch files — config IS committed)
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output/
+fastlane/README.md
+# Deliberately DO commit: fastlane/Fastfile, Appfile, Matchfile, deliver/*
+vendor/

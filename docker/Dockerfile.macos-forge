@@ -1,0 +1,113 @@
+# Dockerfile.macos-forge — MASTER image for FORGE macOS VM work
+#
+# Base: sickcodes/docker-osx:latest (Arch + QEMU + OpenCore + OVMF + Launch.sh)
+# Adds: Weston dual-backend (headless|intel), automation tools, baked scripts.
+#
+# Goal: `docker run` → container is READY. No multi-hour pacman/apt every boot.
+# QEMU/OpenCore already live in the base image; we only add display + ops deps.
+#
+# Build:
+#   docker build -t macos-forge:master -f Dockerfile.macos-forge .
+#   docker tag macos-forge:master macos-forge:weston
+#
+# Run (headless Weston — default):
+#   docker run -d --name forge-vm --privileged --device /dev/kvm \
+#     --cpuset-cpus=0-1,16 --memory=6g --memory-swap=6g \
+#     -p 50922:10022 -v forge-vm-data:/data \
+#     -e WESTON_BACKEND=headless \
+#     macos-forge:master
+#
+# Run (Intel iGPU for Weston — NEVER pass NVIDIA):
+#   docker run -d --name forge-vm --privileged --device /dev/kvm \
+#     --device /dev/dri/card2 --device /dev/dri/renderD129 \
+#     --cpuset-cpus=0-1,16 --memory=6g --memory-swap=6g \
+#     -p 50922:10022 -v forge-vm-data:/data \
+#     -e WESTON_BACKEND=intel \
+#     macos-forge:master
+
+FROM sickcodes/docker-osx:latest
+
+USER root
+
+# --------------------------------------------------------------------------
+# System packages — baked once. Base image already has QEMU/OpenCore/OVMF.
+# --------------------------------------------------------------------------
+# Note: Arch snapshot in docker-osx can be stale. Syu + core libs for XWayland.
+# Core (must succeed) — display + monitor automation
+RUN pacman -Sy --noconfirm --overwrite '*' archlinux-keyring \
+    && pacman -Syu --noconfirm --overwrite '*' \
+    && pacman -S --noconfirm --needed --overwrite '*' \
+        weston \
+        xorg-xwayland \
+        dbus \
+        xdotool \
+        tigervnc \
+        scrot \
+        python \
+        imagemagick \
+        socat \
+        mesa \
+        libglvnd \
+        git \
+        rsync \
+        which \
+        procps-ng \
+        iproute2 \
+    && pacman -Scc --noconfirm \
+    && (command -v python3 >/dev/null || ln -sf /usr/bin/python /usr/bin/python3) \
+    && (command -v python >/dev/null || ln -sf /usr/bin/python3 /usr/bin/python) \
+    && true
+
+# Optional Intel DRM stack + extras (best-effort; do not fail the master image)
+RUN pacman -S --noconfirm --needed --overwrite '*' \
+        mesa-utils libva vulkan-intel intel-media-driver \
+        gnu-netcat openssh \
+    || pacman -S --noconfirm --needed --overwrite '*' mesa-utils libva \
+    || true
+
+# Ensure libgcc present after upgrades (known docker-osx + pacman -Syu footgun)
+RUN if [ ! -e /usr/lib/libgcc_s.so.1 ]; then \
+      pacman -S --noconfirm --overwrite '*' gcc-libs libgomp 2>/dev/null || true; \
+    fi
+
+# --------------------------------------------------------------------------
+# Baked scripts (no docker cp at runtime)
+# --------------------------------------------------------------------------
+COPY start-display.sh /usr/local/bin/start-display.sh
+COPY start-qemu.sh /usr/local/bin/start-qemu.sh
+COPY apply-launch-patches.sh /usr/local/bin/apply-launch-patches.sh
+COPY forge-vm-entrypoint.sh /usr/local/bin/forge-vm-entrypoint.sh
+COPY persist-disks.sh /usr/local/bin/persist-disks.sh
+COPY qemu_typer.py /usr/local/bin/qemu_typer.py
+COPY qemu_control.py /usr/local/bin/qemu_control.py
+COPY open_terminal.py /usr/local/bin/open_terminal.py
+
+RUN chmod +x \
+      /usr/local/bin/start-display.sh \
+      /usr/local/bin/start-qemu.sh \
+      /usr/local/bin/apply-launch-patches.sh \
+      /usr/local/bin/forge-vm-entrypoint.sh \
+      /usr/local/bin/persist-disks.sh \
+      /usr/local/bin/qemu_typer.py \
+      /usr/local/bin/qemu_control.py \
+      /usr/local/bin/open_terminal.py \
+    && mkdir -p /data /opt/forge \
+    && echo "macos-forge:master baked $(date -u +%Y-%m-%dT%H:%MZ)" > /opt/forge/IMAGE_VERSION
+
+# Defaults (overridable at runtime)
+ENV WESTON_BACKEND=headless \
+    WESTON_WIDTH=1920 \
+    WESTON_HEIGHT=1080 \
+    RAM=4 \
+    SMP=2 \
+    CORES=2 \
+    SHORTNAME=sonoma \
+    BASESYSTEM_FORMAT=raw \
+    DISPLAY=:0 \
+    XDG_RUNTIME_DIR=/tmp/weston-run \
+    SCREEN_SHARE_PORT=5901
+
+# Keep container alive; ops via docker exec or entrypoint helper
+# entrypoint only prepares env; does NOT auto-start QEMU (install is long-running)
+ENTRYPOINT ["/usr/local/bin/forge-vm-entrypoint.sh"]
+CMD ["sleep", "infinity"]

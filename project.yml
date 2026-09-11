@@ -1,0 +1,135 @@
+name: FORGE
+options:
+  bundleIdPrefix: com.forge
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    # The VM host is x86_64 (QEMU Haswell): SPM packages build for the host
+    # (x86_64) while named simulator destinations default the app to arm64
+    # → "incompatible with this Swift compiler". Simulator builds are pinned
+    # to the host arch; DEVICE builds are untouched (still arm64).
+    EXCLUDED_ARCHS[sdk=iphonesimulator*]: arm64
+    ONLY_ACTIVE_ARCH: "NO"
+    INFOPLIST_FILE: iOS/FORGE/Info.plist
+    CODE_SIGN_ENTITLEMENTS: iOS/FORGE/FORGE.entitlements
+    CODE_SIGN_IDENTITY: ""
+    CODE_SIGNING_REQUIRED: "NO"
+    CODE_SIGNING_ALLOWED: "NO"
+    DEVELOPMENT_TEAM: ""
+    PRODUCT_BUNDLE_IDENTIFIER: com.forge.app
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_BITCODE: "NO"
+    ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: "YES"
+packages:
+  SwiftTerm:
+    url: https://github.com/migueldeicaza/SwiftTerm
+    from: "1.15.0"
+targets:
+  FORGE:
+    type: application
+    platform: iOS
+    sources:
+      - path: iOS/FORGE/App
+      - path: iOS/FORGE/Theme
+      - path: iOS/FORGE/Presentation
+      - path: iOS/FORGE/Bridge
+      - path: iOS/FORGE/Core
+      - path: iOS/FORGE/Gestures
+      - path: iOS/FORGE/Security
+      - path: iOS/FORGE/Resources/LaunchScreen.storyboard
+      - path: iOS/FORGE/Resources/forge-bundle.js
+        buildPhase: resources
+      - path: iOS/FORGE/Resources/preview-bootstrap.js
+        buildPhase: resources
+      - path: iOS/FORGE/Resources/pyodide
+        type: folder
+        buildPhase: resources
+      - path: iOS/FORGE/Resources/Fonts
+        buildPhase: resources
+    dependencies:
+      - package: SwiftTerm
+        product: SwiftTerm
+    info:
+      path: iOS/FORGE/Info.plist
+      properties:
+        CFBundleName: FORGE
+        CFBundleDisplayName: FORGE
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "1"
+        UILaunchStoryboardName: LaunchScreen
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UIStatusBarStyle: UIStatusBarStyleLightContent
+        UIAppFonts:
+          - JetBrainsMono-Regular.ttf
+          - JetBrainsMono-Bold.ttf
+          - JetBrainsMono-SemiBold.ttf
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+          NSExceptionDomains:
+            localhost:
+              NSExceptionAllowsInsecureHTTPLoads: true
+        # N7: expose Documents/ in the Files app so agent-written project
+        # files (HTML games etc.) can ALSO be opened from Files/Safari.
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+        NSLocalNetworkUsageDescription: "FORGE discovers opencode servers on your local network."
+        NSBonjourServices:
+          - _opencode._tcp
+          - _http._tcp
+    settings:
+      base:
+        PRODUCT_NAME: FORGE
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+
+  FORGETests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: iOS/FORGE/Tests
+    dependencies:
+      - target: FORGE
+    settings:
+      base:
+        PRODUCT_NAME: FORGETests
+        PRODUCT_BUNDLE_IDENTIFIER: com.forge.tests
+        SWIFT_VERSION: "5.9"
+        IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+        # Host the unit tests inside the FORGE app so WKWebView keeps its web
+        # content process alive (bare test bundles get "InvalidTransition" /
+        # WebProcess NearSuspended) and keychain entitlements apply.
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/FORGE.app/FORGE"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
+  FORGEUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: iOS/FORGE/UITests
+    dependencies:
+      - target: FORGE
+    settings:
+      base:
+        PRODUCT_NAME: FORGEUITests
+        PRODUCT_BUNDLE_IDENTIFIER: com.forge.uitests
+
+# Gate D / Mode1/Mode2 UITests need a scheme with test action
+schemes:
+  FORGE:
+    build:
+      targets:
+        FORGE: all
+        FORGEUITests: [test]
+    test:
+      targets:
+        - FORGEUITests
+      gatherCoverageData: false
