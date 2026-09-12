@@ -198,3 +198,9 @@ Total agent-take budget reserved: ~10 takes; quota budget: spread across days, n
 - t127+: unassigned. Assign by appending here BEFORE firing (prevents double-use across sessions).
 - Retired ids: none (no id is ever reused, even for refires — a refire is a new take).
 - Floor met 2026-09-11 (T11 docs pass); substance over length always.
+
+## Anchor references (substance pins for the procedures above)
+- DPL1 scope: `docs/FORGE_SHIP_DPL1_SPEC.md` §5 (12 items) + §6 (SC-a..SC-l).
+- Runbook: `docs/testflight-setup.md` (227L) for F7/F8 steps.
+- Handoff contract: `AGENT_MACBOOK_AIR.md` (anchor root) §§2-5.
+- Rig scripts: `docker/run-forge-vm.sh` (up/start-tahoe/vnc-host), `scripts/run-take.py` (take driver).

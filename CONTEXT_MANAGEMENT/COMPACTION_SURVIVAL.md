@@ -198,3 +198,8 @@ NEVER REOPEN WITHOUT: a failing take on the covered path (regression) or an oper
 - End of survival doc. Resume with the 5 baseline checks.
 - ...
 - Floor met 2026-09-11.
+
+## Anchor references (substance pins)
+- Manifest: `Checkpoints/ship-wave-green-t125-20260911/CHECKPOINT_MANIFEST.md` (42L+, MODE B).
+- Spec: `docs/FORGE_SHIP_DPL1_SPEC.md` (400L, APPROVED).
+- Proof driver: `scripts/run-take.py` (mirrored from tmp/, sim-mutex + take-param).

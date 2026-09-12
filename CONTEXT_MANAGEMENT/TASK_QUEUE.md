@@ -198,3 +198,9 @@ Baseline re-verify (commit + bundle SHA + suite) → preflight (rig up, SIM-free
 - Queue status: 10 terminal, 2 in_progress (T9 handoff, T11 this pass), 0 blocked-silent.
 - Next review: after F5 regression or operator handoff movement.
 - Owner: primary agent; subagents bind via task_id only.
+
+## Anchor references (substance pins for the ledger above)
+- Ledger source: `GAUNTLET_PROGRESS.md` (takes t76-t125 + backfills).
+- Audit: `reports/ZeroTrustAudit_2026-09-11.md` (claims table + 6 frauds).
+- Reports: `reports/Engineering_Report_v1.md` through `v4.md` (series).
+- Handover pins: `handovers/GOAL_PIN_SC12_T78.md`, `handovers/GOAL_PIN_SHIP_SPEC.md` (provenance only).
