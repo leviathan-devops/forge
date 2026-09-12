@@ -198,3 +198,9 @@ Stop firing takes. Re-read CURRENT_STATE flake playbook + DEBUG_LOG lessons. Che
 - Gate status at write: density ✓ refs ✓ SHA ✓ (see T11 gate run).
 - Amendments welcome as appended sections with dates, never silent edits.
 - End of entry sequence. Begin with the 5 baseline checks.
+
+## 2026-09-12 ADDENDUM (post-compaction_xyz state — read first, overrides older lines on conflict)
+- Branch: worktree is ON air-drop (e7a3071+); master @ 3d08b40. Return via plumbing (read-tree + hash-object + commit-tree + update-ref with lease); NEVER checkout -f (other sessions' untracked state).
+- MacBook: SSH WORKS (key ~/.ssh/forge_macbook → sss@100.115.58.24, Sequoia arm64, NO Xcode yet). Next: toolchain (xcodegen/node/pytest) → clone air-drop → unsigned build (proven flags) → Apple-ID signing (operator screen) → install → smoke → commit back per AGENT_MACBOOK_AIR.md.
+- VM: DOWN (volume kept); revive via run-forge-vm.sh up if takes needed.
+- Suite 88/88, bundle f06bda2b, keys env-only (2 chat copies pending rotation), firewall OFF per operator order.
