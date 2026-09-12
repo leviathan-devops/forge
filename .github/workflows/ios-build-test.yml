@@ -1,0 +1,245 @@
+name: FORGE Build & Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode (use latest available)
+        run: |
+          # List available Xcode versions and use the latest
+          ls /Applications/Xcode*.app 2>/dev/null || true
+          sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)" 2>/dev/null || true
+          xcodebuild -version
+          swift --version
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          xcodegen generate 2>&1
+          ls -la FORGE.xcodeproj/
+
+      - name: Build for iOS Simulator
+        run: |
+          xcodebuild build \
+            -project FORGE.xcodeproj \
+            -scheme FORGE \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -configuration Debug \
+            -derivedDataPath ./build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            2>&1 | tee build.log
+
+      - name: Check Build Result
+        run: |
+          if [ -f "./build/Build/Products/Debug-iphonesimulator/FORGE.app/FORGE" ]; then
+            echo "BUILD SUCCESS"
+            ls -la ./build/Build/Products/Debug-iphonesimulator/FORGE.app/
+          else
+            echo "BUILD FAILED — checking log"
+            grep -i "error:" build.log | head -30
+            exit 1
+          fi
+
+      - name: Boot iOS Simulator & Install
+        run: |
+          # Boot simulator
+          xcrun simctl boot "iPhone 16" 2>/dev/null || true
+          sleep 10
+
+          # Install the app
+          xcrun simctl install booted ./build/Build/Products/Debug-iphonesimulator/FORGE.app
+          echo "INSTALLED"
+
+          # Launch the app
+          xcrun simctl launch booted com.forge.app 2>/dev/null || true
+          sleep 5
+
+          # Take screenshot
+          xcrun simctl io booted screenshot "$GITHUB_WORKSPACE/forge-launch-screenshot.png"
+          echo "SCREENSHOT TAKEN"
+
+      - name: Run UI Tests
+        run: |
+          # Hard-fail on assertion failure (F-CI-SOFT-FAIL). Artifact
+          # collection is a separate if:always() step so logs/xcresult
+          # still upload when tests fail.
+          set -o pipefail
+          mkdir -p "$GITHUB_WORKSPACE/ui-screenshots-gate-d"
+          export FORGE_SCREENSHOT_DIR="$GITHUB_WORKSPACE/ui-screenshots-gate-d"
+          export TEST_RUNNER_FORGE_SCREENSHOT_DIR="$FORGE_SCREENSHOT_DIR"
+          export GATE_D=1
+          # Prefer Gate D smoke first (writes D1/D2/D3 named PNGs on disk).
+          xcodebuild test \
+            -project FORGE.xcodeproj \
+            -scheme FORGE \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -only-testing:FORGEUITests/FORGEUITests/testGateDSmokeScreenshots \
+            -only-testing:FORGEUITests/FORGEUITests/testMissionControlFlow \
+            -only-testing:FORGEUITests/FORGEUITests/testLaunchMenuElements \
+            -only-testing:FORGEUITests/FORGEUITests/testSettingsFlow \
+            -derivedDataPath ./build \
+            CODE_SIGNING_ALLOWED=NO \
+            -resultBundlePath ./test-results.xcresult \
+            2>&1 | tee ui-test.log
+          # Copy Gate D on-disk PNGs into ui-screenshots for upload
+          mkdir -p ui-screenshots
+          cp -a "$FORGE_SCREENSHOT_DIR"/. ui-screenshots/ 2>/dev/null || true
+          ls -la ui-screenshots | head -40
+
+      - name: Collect UI Test Artifacts
+        if: always()
+        run: |
+          # Collect screenshots from the simulator (simctl io screenshots)
+          mkdir -p ui-screenshots
+          find ~/Library/Developer/CoreSimulator/Devices -name "*.png" -newer build.log -exec cp {} ui-screenshots/ 2>/dev/null || true
+          echo "Collected $(ls ui-screenshots/ 2>/dev/null | wc -l) simulator screenshots"
+
+          # Extract XCTAttachment screenshots from the .xcresult bundle.
+          # These are the named attachments (terminal-screen, settings-open,
+          # mission-control, etc.) added via XCTAttachment(lifetime: .keepAlways).
+          mkdir -p ui-attachments
+          if [ -d "./test-results.xcresult" ]; then
+            # xcresulttool can export all attachments in bulk
+            xcrun xcresulttool export attachments \
+              --path ./test-results.xcresult \
+              --output-path ./ui-attachments 2>/dev/null || true
+            # Fallback: dig into the .xcresult bundle for raw attachment files
+            find ./test-results.xcresult -name "*.png" -o -name "*.jpeg" -o -name "*.heic" 2>/dev/null \
+              | while read -r f; do cp "$f" ./ui-attachments/ 2>/dev/null || true; done
+          fi
+          echo "Collected $(ls ui-attachments/ 2>/dev/null | wc -l) xcresult attachments"
+
+      - name: Generate App Store Screenshots
+        # Runs after the build succeeds and UI tests complete. Uses the built
+        # FORGE.app and the iPhone 16 Pro Max simulator (6.7" — 1290x2796) to
+        # capture App Store submission screenshots.
+        #
+        # The script boots iPhone 16 Pro Max specifically (the build/UI-test
+        # steps use iPhone 16), captures the launch menu live via simctl, and
+        # pulls screen-specific shots from the UI test attachments directory.
+        run: |
+          chmod +x scripts/capture-screenshots.sh
+          ./scripts/capture-screenshots.sh \
+            ./build/Build/Products/Debug-iphonesimulator/FORGE.app \
+            screenshots/app-store \
+            ./ui-attachments
+
+      - name: Upload App Store Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-store-screenshots
+          path: screenshots/app-store/
+          if-no-files-found: warn
+
+      - name: Upload Build Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: ignore
+
+      - name: Upload Screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: "*.png"
+          if-no-files-found: ignore
+
+      - name: Upload UI Test Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-screenshots
+          path: ui-screenshots/
+          if-no-files-found: ignore
+
+      - name: Upload XCResult Attachments
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-attachments
+          path: ui-attachments/
+          if-no-files-found: ignore
+
+      - name: Upload XCResult Bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-xcresult
+          path: test-results.xcresult/
+          if-no-files-found: ignore
+
+      - name: Upload UI Test Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-log
+          path: ui-test.log
+          if-no-files-found: ignore
+
+      - name: Upload App Bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FORGE-app
+          path: ./build/Build/Products/Debug-iphonesimulator/FORGE.app
+          if-no-files-found: ignore
+
+  test-typescript:
+    name: TypeScript Shims Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Dependencies
+        run: |
+          cd forge
+          bun install 2>/dev/null || npm install
+
+      - name: TypeScript Type Check
+        # Hard-fail on type errors (Wave 6 pollution-scrub: residual TS soft-fail).
+        # Prefer bun when present; fall back to npx tsc. Exit non-zero on errors.
+        run: |
+          cd forge
+          if command -v bun >/dev/null 2>&1; then
+            bun run typecheck
+          else
+            npx tsc --noEmit
+          fi
+
+      - name: esbuild Bundle Test
+        # Rebuild forge-bundle.js from repo scripts (FORGE_ROOT from script dir).
+        # Hard-fail on rebuild failure (Wave 6 pollution-scrub residual).
+        run: |
+          node scripts/build-forge-bundle.mjs
+          test -s iOS/FORGE/Resources/forge-bundle.js
+          echo "bundle bytes: $(wc -c < iOS/FORGE/Resources/forge-bundle.js | tr -d ' ')"
