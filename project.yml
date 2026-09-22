@@ -13,7 +13,6 @@ settings:
     # (x86_64) while named simulator destinations default the app to arm64
     # → "incompatible with this Swift compiler". Simulator builds are pinned
     # to the host arch; DEVICE builds are untouched (still arm64).
-    EXCLUDED_ARCHS[sdk=iphonesimulator*]: arm64
     ONLY_ACTIVE_ARCH: "NO"
     INFOPLIST_FILE: iOS/FORGE/Info.plist
     CODE_SIGN_ENTITLEMENTS: iOS/FORGE/FORGE.entitlements
@@ -29,7 +28,7 @@ settings:
 packages:
   SwiftTerm:
     url: https://github.com/migueldeicaza/SwiftTerm
-    from: "1.15.0"
+    exactVersion: "1.18.0"
 targets:
   FORGE:
     type: application
