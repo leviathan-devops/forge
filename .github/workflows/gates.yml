@@ -1,0 +1,49 @@
+# JT-010 (LEV-16) factory gates. Posts on push (HEAD) and PRs.
+# Job names = check-run contexts. Arm a context in a ruleset ONLY after it has posted success on HEAD.
+name: gates
+"on":
+  push:
+    branches: ["**"]
+  pull_request:
+  merge_group:
+permissions:
+  contents: read
+jobs:
+  anti_theatrical:
+    name: gates/anti-theatrical
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: no empty catch, no AI disclaimers in tracked source
+        run: |
+          set -euo pipefail
+          if git grep -nE 'catch *\([^)]*\) *\{ *\}|As an AI language model' -- ':!*.md' ':!.github/**'; then
+            echo "REJECT(anti-theatrical)"; exit 1; fi
+          echo "anti-theatrical: clean"
+  secret_scan:
+    name: gates/secret-scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  test:
+    name: gates/test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        if: hashFiles('bun.lock', 'bun.lockb', 'package.json') != ''
+      - name: run tests if the repo has them (fail closed if a suite exists and fails)
+        run: |
+          set -euo pipefail
+          if [ -f package.json ]; then
+            bun install --frozen-lockfile
+            if grep -q '"test"' package.json; then bun test; fi
+            if [ -f tsconfig.json ]; then bunx tsc --noEmit; fi
+          else
+            echo "gates/test: no JS/TS project; nothing to run"
+          fi
